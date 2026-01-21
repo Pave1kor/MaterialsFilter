@@ -7,16 +7,15 @@ import (
 
 func main() {
 	material := materials.NewMaterials()
-	if err := material.ReaderCSV(); err != nil {
+	if err := material.ReaderCSV("../data/input/zt_value.csv"); err != nil {
 		log.Fatal(err)
 	}
 	material.ParseMaterials()
-	material.MaterialsFilterHeusler()
-	material.MaterialsFilterChalcogenide()
-	if err := material.WriteCSVHeusler(); err != nil {
+	material.MaterialsFilter()
+	if err := material.WriteCSVHeusler("../data/output/HeuslerFilter.csv"); err != nil {
 		log.Fatal(err)
 	}
-	if err := material.WriteCSVChalcogenide(); err != nil {
+	if err := material.WriteCSVChalcogenide("../data/output/ChalcogenideFilter.csv"); err != nil {
 		log.Fatal(err)
 	}
 }

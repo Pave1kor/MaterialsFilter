@@ -2,23 +2,23 @@ package materials
 
 import (
 	filter "MaterialsFilter/internal/filter"
-	"bufio"
 	"encoding/csv"
 	"io"
 	"os"
 	"regexp"
-	"strings"
+	"slices"
 )
 
 // Извлечение данных из файла
-func (m *MaterialsInformation) ReaderCSV() error{
-	file, err := os.Open("ZT value.csv")
+func (m *MaterialsInformation) ReaderCSV(path string) error {
+	file, err := os.Open(path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
 	r := csv.NewReader(file)
+	r.Comma = ';'
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
@@ -27,8 +27,7 @@ func (m *MaterialsInformation) ReaderCSV() error{
 		if err != nil {
 			return err
 		}
-		row := strings.Split(record[0], ";")
-		(*m)[MaterialsName(row[0])] = Material{InformationElements: strings.Join(record, "")}
+		(*m)[MaterialsName(record[0])] = Material{InformationElements: record}
 	}
 	return nil
 }
@@ -48,79 +47,66 @@ func regParsedMaterials(material string) []string {
 }
 
 // фильтр соединений
-func (m *MaterialsInformation) MaterialsFilterHeusler() {
-	filterLists := filter.HeuslerFilter()
-	for materialsName, material := range *m {
-		for _, element := range material.ParseMaterials {
-			material.FilterHeusler = true
-			if _, ok := filterLists[filter.Elements(element)]; !ok {
-				material.FilterHeusler = false
-				break
-			}
-		}
-		(*m)[materialsName] = material
-	}
+func (m *MaterialsInformation) MaterialsFilter() {
+	m.filter(*filter.NewHeuslerFilter(), func(m *Material, v bool) {
+		m.FilterHeusler = v
+	})
+	m.filter(*filter.NewChalcogenideFilter(), func(m *Material, v bool) {
+		m.FilterChalcogenide = v
+	})
 }
-func (m *MaterialsInformation) MaterialsFilterChalcogenide() {
-	filterLists := filter.ChalcogenideFilter()
-	for materialsName, material := range *m {
-		for _, element := range material.ParseMaterials {
-			material.FilterChalcogenide = true
-			if _, ok := filterLists[filter.Elements(element)]; !ok {
-				material.FilterChalcogenide = false
-				break
-			}
-		}
-		(*m)[materialsName] = material
+
+func (m *MaterialsInformation) filter(
+	filterList filter.FilterLists,
+	setter func(*Material, bool),
+) {
+	for name, material := range *m {
+		ok := !slices.ContainsFunc(material.ParseMaterials, filterList.Get)
+		setter(&material, ok)
+		(*m)[name] = material
 	}
 }
 
-// сохранение отфильтрованных значений
-func (m *MaterialsInformation) WriteCSVChalcogenide() error{
-	file, err := os.Create("filteredMaterialsChalcogenide.csv")
+// Сохранение отфильтрованного списка Халькогенидов
+func (m *MaterialsInformation) WriteCSVChalcogenide(path string) error {
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	writer := bufio.NewWriter(file)
+	writer := csv.NewWriter(file)
+	writer.Comma = ';'
 	for _, material := range *m {
 		if material.FilterChalcogenide {
-			writer.WriteString(material.InformationElements)
-			writer.WriteByte('\n')
+			writer.Write(material.InformationElements)
 		}
 	}
-	err = writer.Flush()
-	if err != nil {
+	writer.Flush()
+	if err = writer.Error(); err != nil {
 		return err
 	}
-	err = file.Close()
-	if err != nil {
-		return err
-	}
-return nil
+
+	return nil
 }
 
-func (m *MaterialsInformation) WriteCSVHeusler() error {
-	file, err := os.Create("filteredMaterialsHeusler.csv")
+// Сохранение отфильтрованного списка сплавов Гейслера
+func (m *MaterialsInformation) WriteCSVHeusler(path string) error {
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	writer := bufio.NewWriter(file)
+	writer := csv.NewWriter(file)
+	writer.Comma = ';'
 	for _, material := range *m {
 		if material.FilterHeusler {
-			writer.WriteString(material.InformationElements)
-			writer.WriteByte('\n')
+			writer.Write(material.InformationElements)
 		}
 	}
-	err = writer.Flush()
-	if err != nil {
-		return err
-	}
-	err = file.Close()
-	if err != nil {
+	writer.Flush()
+	if err = writer.Error(); err != nil {
 		return err
 	}
 	return nil
