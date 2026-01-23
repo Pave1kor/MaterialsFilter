@@ -57,7 +57,6 @@ func (m *MaterialsInformation) MaterialsFilter(config cfg.Config) {
 			for _, elements := range materialRow.ParseMaterials {
 				if !filterList.Get(nameFilter, elements) {
 					passed = false
-					break
 				}
 				materialRow.FiltersName[nameFilter] = passed
 			}
