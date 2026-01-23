@@ -1,21 +1,11 @@
 package main
 
 import (
-	materials "MaterialsFilter/internal/materials"
-	"log"
+	app "MaterialsFilter/internal/app"
+	cfg "MaterialsFilter/internal/config"
 )
 
 func main() {
-	material := materials.NewMaterials()
-	if err := material.ReaderCSV("../data/input/zt_value.csv"); err != nil {
-		log.Fatal(err)
-	}
-	material.ParseMaterials()
-	material.MaterialsFilter()
-	if err := material.WriteCSVHeusler("../data/output/HeuslerFilter.csv"); err != nil {
-		log.Fatal(err)
-	}
-	if err := material.WriteCSVChalcogenide("../data/output/ChalcogenideFilter.csv"); err != nil {
-		log.Fatal(err)
-	}
+	cfg := cfg.Load()
+	app.Run(cfg)
 }
