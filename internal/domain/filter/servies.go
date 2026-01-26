@@ -6,18 +6,17 @@ import (
 )
 
 // Загрузка фильтров из конфига
-func (s *FilterLists) SetFilters(cfg config.Config) {
-	filterLists := cfg.Filters
+func (s *FilterLists) SetFilters(filterLists []config.Filter) {
 	s.NewFilter()
 	re := regexp.MustCompile(`[A-Z][a-z]?`)
 
-	for nameFilter, valuesListsString := range filterLists {
-		valuesListsArr := re.FindAllString(valuesListsString, -1)
+	for _, filter := range filterLists {
+		valuesListsArr := re.FindAllString(filter.DataFilter, -1)
 		var valuesListMap = make(map[Elements]any, 100)
 		for _, valuesLists := range valuesListsArr {
 			valuesListMap[Elements(valuesLists)] = struct{}{}
 		}
-		s.listFilters[nameFilter] = valuesListMap
+		s.listFilters[filter.NameFilter] = valuesListMap
 	}
 }
 

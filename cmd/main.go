@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
-	cfg := cfg.Load()
+	cfg, err := cfg.Load()
+	if err != nil {
+		return
+	}
 	app.Run(cfg)
 }

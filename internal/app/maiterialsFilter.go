@@ -7,14 +7,16 @@ import (
 )
 
 func Run(config *cfg.Config) {
+	for _, path := range config.Paths {
+		material := material.NewMaterials()
+		if err := material.ReaderCSV(path.InputData); err != nil {
+			log.Fatal(err)
+		}
+		material.ParseMaterials()
+		material.MaterialsFilter(config.Filters)
+		if err := material.WriteCSV(config.Filters); err != nil {
+			log.Fatal(err)
+		}
+	}
 
-	material := material.NewMaterials()
-	if err := material.ReaderCSV(config.Paths.InputData); err != nil {
-		log.Fatal(err)
-	}
-	material.ParseMaterials()
-	material.MaterialsFilter(*config)
-	if err := material.WriteCSV(*config); err != nil {
-		log.Fatal(err)
-	}
 }

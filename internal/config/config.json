@@ -1,0 +1,19 @@
+{
+    "Paths": [
+        {
+            "InputData": "../data/input/zt_value.csv"
+        }
+    ],
+    "Filters": [
+        {
+            "NameFilter": "heusler",
+            "OutputData": "../data/output/heusler.csv",
+            "DataFilter": "Fe, Ti, V, Cr, Mn, Co, Ni, Cu, Zr, Sn, Ga, Al, Si, Ge, W"
+        },
+        {
+            "NameFilter": "chalcogenide",
+            "OutputData": "../data/output/chalcogenide.csv",
+            "DataFilter": "W, Bi, Sb, Te, Se, Mg, S"
+        }
+    ]
+}       

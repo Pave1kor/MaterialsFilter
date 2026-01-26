@@ -47,18 +47,18 @@ func regParsedMaterials(material string) []string {
 }
 
 // фильтр соединений
-func (m *MaterialsInformation) MaterialsFilter(config cfg.Config) {
+func (m *MaterialsInformation) MaterialsFilter(filters []cfg.Filter) {
 	filterList := filter.FilterLists{}
-	filterList.SetFilters(config)
+	filterList.SetFilters(filters)
 	for materialName, materialRow := range *m {
-		for nameFilter := range config.Filters {
+		for _, filter := range filters {
 			materialRow.NewMaterialsRow()
 			passed := true
 			for _, elements := range materialRow.ParseMaterials {
-				if !filterList.Get(nameFilter, elements) {
+				if !filterList.Get(filter.NameFilter, elements) {
 					passed = false
 				}
-				materialRow.FiltersName[nameFilter] = passed
+				materialRow.FiltersName[filter.NameFilter] = passed
 			}
 			(*m)[materialName] = materialRow
 		}
@@ -66,15 +66,14 @@ func (m *MaterialsInformation) MaterialsFilter(config cfg.Config) {
 }
 
 // Сохранение отфильтрованного списка
-func (m *MaterialsInformation) WriteCSV(config cfg.Config) error {
-	for nameFilters := range config.Filters {
-		path := config.Paths.OutputData + nameFilters + ".csv"
-		file, err := os.Create(path)
+func (m *MaterialsInformation) WriteCSV(filters []cfg.Filter) error {
+	for _, filter := range filters {
+		file, err := os.Create(filter.OutputData)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
-		writeFile(file, nameFilters, m)
+		writeFile(file, filter.NameFilter, m)
 	}
 	return nil
 }
