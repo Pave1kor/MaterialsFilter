@@ -7,7 +7,7 @@ import (
 )
 
 func Load() (*Config, error) {
-	data, err := os.ReadFile("../internal/config/config.json")
+	data, err := os.ReadFile("../config/config.json")
 	if err != nil {
 		return nil, err
 	}

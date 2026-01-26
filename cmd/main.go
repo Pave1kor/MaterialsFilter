@@ -1,14 +1,15 @@
 package main
 
 import (
+	cfg "MaterialsFilter/config"
 	app "MaterialsFilter/internal/app"
-	cfg "MaterialsFilter/internal/config"
+	"log"
 )
 
 func main() {
 	cfg, err := cfg.Load()
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 	app.Run(cfg)
 }

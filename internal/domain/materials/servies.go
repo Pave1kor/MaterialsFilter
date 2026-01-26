@@ -1,8 +1,8 @@
 package materials
 
 import (
-	cfg "MaterialsFilter/internal/config"
-	filter "MaterialsFilter/internal/domain/filter"
+	cfg "MaterialsFilter/config"
+	filterObj "MaterialsFilter/internal/domain/filter"
 	"encoding/csv"
 	"io"
 	"os"
@@ -47,34 +47,31 @@ func regParsedMaterials(material string) []string {
 }
 
 // фильтр соединений
-func (m *MaterialsInformation) MaterialsFilter(filters []cfg.Filter) {
-	filterList := filter.FilterLists{}
-	filterList.SetFilters(filters)
+func (m *MaterialsInformation) MaterialsFilter(filter cfg.Filter) {
+	filterList := filterObj.FilterLists{}
+	filterList.SetFilters(filter)
+
 	for materialName, materialRow := range *m {
-		for _, filter := range filters {
-			materialRow.NewMaterialsRow()
-			passed := true
-			for _, elements := range materialRow.ParseMaterials {
-				if !filterList.Get(filter.NameFilter, elements) {
-					passed = false
-				}
-				materialRow.FiltersName[filter.NameFilter] = passed
+		materialRow.NewMaterialsRow()
+		passed := true
+		for _, elements := range materialRow.ParseMaterials {
+			if !filterList.Get(filter.Name, elements) {
+				passed = false
 			}
-			(*m)[materialName] = materialRow
+			materialRow.FiltersName[filter.Name] = passed
 		}
+		(*m)[materialName] = materialRow
 	}
 }
 
 // Сохранение отфильтрованного списка
-func (m *MaterialsInformation) WriteCSV(filters []cfg.Filter) error {
-	for _, filter := range filters {
-		file, err := os.Create(filter.OutputData)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		writeFile(file, filter.NameFilter, m)
+func (m *MaterialsInformation) WriteCSV(filter cfg.Filter) error {
+	file, err := os.Create(filter.Output)
+	if err != nil {
+		return err
 	}
+	defer file.Close()
+	writeFile(file, filter.Name, m)
 	return nil
 }
 

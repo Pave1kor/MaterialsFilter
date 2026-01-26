@@ -1,20 +1,20 @@
 package app
 
 import (
-	cfg "MaterialsFilter/internal/config"
+	cfg "MaterialsFilter/config"
 	material "MaterialsFilter/internal/domain/materials"
 	"log"
 )
 
 func Run(config *cfg.Config) {
-	for _, path := range config.Paths {
+	for _, file := range config.Filters {
 		material := material.NewMaterials()
-		if err := material.ReaderCSV(path.InputData); err != nil {
+		if err := material.ReaderCSV(file.Input); err != nil {
 			log.Fatal(err)
 		}
 		material.ParseMaterials()
-		material.MaterialsFilter(config.Filters)
-		if err := material.WriteCSV(config.Filters); err != nil {
+		material.MaterialsFilter(file)
+		if err := material.WriteCSV(file); err != nil {
 			log.Fatal(err)
 		}
 	}

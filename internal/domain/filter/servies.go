@@ -1,23 +1,22 @@
 package filter
 
 import (
-	config "MaterialsFilter/internal/config"
+	config "MaterialsFilter/config"
 	"regexp"
 )
 
 // Загрузка фильтров из конфига
-func (s *FilterLists) SetFilters(filterLists []config.Filter) {
+func (s *FilterLists) SetFilters(filter config.Filter) {
 	s.NewFilter()
-	re := regexp.MustCompile(`[A-Z][a-z]?`)
 
-	for _, filter := range filterLists {
-		valuesListsArr := re.FindAllString(filter.DataFilter, -1)
-		var valuesListMap = make(map[Elements]any, 100)
-		for _, valuesLists := range valuesListsArr {
-			valuesListMap[Elements(valuesLists)] = struct{}{}
-		}
-		s.listFilters[filter.NameFilter] = valuesListMap
+	re := regexp.MustCompile(`[A-Z][a-z]?`)
+	valuesListsArr := re.FindAllString(filter.Filter, -1)
+	var valuesListMap = make(map[Elements]any, 100)
+
+	for _, valuesLists := range valuesListsArr {
+		valuesListMap[Elements(valuesLists)] = struct{}{}
 	}
+	s.listFilters[filter.Name] = valuesListMap
 }
 
 // Фильтрация значения
