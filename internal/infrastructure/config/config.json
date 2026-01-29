@@ -1,0 +1,14 @@
+{
+    "filters": [
+        {
+            "input": "../data/input/zt_value.csv",
+            "output": "../data/output/heusler.csv",
+            "filter": "Fe, Ti, V, Cr, Mn, Co, Ni, Cu, Zr, Sn, Ga, Al, Si, Ge, W"
+        },
+        {
+            "input": "../data/input/zt_value.csv",
+            "output": "../data/output/chalcogenide.csv",
+            "filter": "W, Bi, Sb, Te, Se, Mg, S"
+        }
+    ]
+}       

@@ -7,7 +7,10 @@ import (
 )
 
 func Load() (*Config, error) {
-	data, err := os.ReadFile("../config/config.json")
+	// здесь необходимо создать файл конфигурации, если его нет
+	// Предложить пользователю заполнить его, если он пустой
+
+	data, err := os.ReadFile("../internal/infrastructure/config/config.json")
 	if err != nil {
 		return nil, err
 	}

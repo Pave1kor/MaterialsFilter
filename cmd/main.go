@@ -1,8 +1,8 @@
 package main
 
 import (
-	cfg "MaterialsFilter/config"
 	app "MaterialsFilter/internal/app"
+	cfg "MaterialsFilter/internal/infrastructure/config"
 	"log"
 )
 
