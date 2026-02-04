@@ -8,20 +8,26 @@ import (
 // в дальнейшем можно вынести в infrastructure.Сдесь создаем интерфейс
 
 // Сохранение отфильтрованного списка
-func (obj *CSVFile) WriteCSV(filteredData map[string][]string) error {
-	file, err := os.Create(obj.Output)
+func (obj *CSVFile) WriteCSV(filteredData map[string][]string, filterName string, path string) error {
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-
-	writeFile(file, filteredData)
+	writeFile(file, filteredData, createFlterName(filterName))
 	return nil
 }
 
-func writeFile(file *os.File, filteredData map[string][]string) error {
+func createFlterName(filterName string) []string {
+	nameArr := [...]string{"Имя фильтра", filterName}
+	return nameArr[:]
+}
+
+func writeFile(file *os.File, filteredData map[string][]string, filterName []string) error {
 	writer := csv.NewWriter(file)
 	writer.Comma = ';'
+
+	writer.Write(filterName)
 	for _, information := range filteredData {
 		writer.Write(information)
 	}

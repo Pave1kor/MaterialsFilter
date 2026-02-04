@@ -1,0 +1,7 @@
+#конфиг
+configs
+
+#обработанные файлы
+data/input
+
+data/output

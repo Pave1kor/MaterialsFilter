@@ -3,20 +3,24 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
 func Load() (*Config, error) {
-	// здесь необходимо создать файл конфигурации, если его нет
-	// Предложить пользователю заполнить его, если он пустой
+	if !CheckConfig() {
+		if err := CreateConfigFile(); err != nil {
+			return nil, err
+		}
+		fmt.Println("Файл настроек успешно создан! Не забудьте добавить фильтр с элементами.")
+	}
 
-	data, err := os.ReadFile("../internal/infrastructure/config/config.json")
+	data, err := os.ReadFile("../configs/config.json")
 	if err != nil {
 		return nil, err
 	}
-	var config Config
 
-	// err = json.Unmarshal(data, &config)
+	var config Config
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
@@ -25,5 +29,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	commandsInformation()
+	changeConfig(&config)
 	return &config, nil
 }

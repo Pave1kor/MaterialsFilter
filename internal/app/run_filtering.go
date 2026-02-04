@@ -8,16 +8,16 @@ import (
 )
 
 func Run(config *cfg.Config) {
-	for _, file := range config.Filters {
-		csvFile := readerWriterCSV.NewCSVFile(file.Input, file.Output)
-		data, err := csvFile.ReadCSV()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		filteredData := filters.ElementsFilter(data, file.Filter)
-		if err := csvFile.WriteCSV(filteredData); err != nil {
+	csvFile := readerWriterCSV.NewCSVFile(config.Input)
+	data, err := csvFile.ReadCSV()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, filter := range config.Filters {
+		filteredData := filters.ElementsFilter(data, filter.Filter)
+		if err := csvFile.WriteCSV(filteredData, filter.Name, filter.Output); err != nil {
 			log.Fatal(err)
 		}
 	}
+
 }

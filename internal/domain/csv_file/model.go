@@ -6,10 +6,9 @@ type CSVFile struct {
 	Comma  rune
 }
 
-func NewCSVFile(input string, output string) *CSVFile {
+func NewCSVFile(input string) *CSVFile {
 	return &CSVFile{
-		Input:  input,
-		Output: output,
-		Comma:  ';',
+		Input: input,
+		Comma: ';',
 	}
 }
