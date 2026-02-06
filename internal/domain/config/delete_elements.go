@@ -1,6 +1,7 @@
 package config
 
 import (
+	ptable "MaterialsFilter/internal/infrastructure/p_table"
 	"bufio"
 	"fmt"
 	"os"
@@ -13,7 +14,7 @@ func deleteElementsInFilter(config *Config) error {
 		fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
 		return nil
 	}
-
+	listFilters(*config)
 	var deleteElement string
 	nameFilter, err := findFilter(config)
 	if err != nil {
@@ -32,7 +33,7 @@ func deleteElementsInFilter(config *Config) error {
 				if deleteElement == "" {
 					break
 				}
-				if ok, _ := get(deleteElement); !ok {
+				if ok, _ := ptable.Get(deleteElement); !ok {
 					fmt.Println("Ввведен неизвестный элемент, попробуйте еще раз.")
 					continue
 				} else {

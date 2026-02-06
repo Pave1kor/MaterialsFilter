@@ -1,6 +1,6 @@
-package config
+package p_table
 
-func get(element string) (bool, string) {
+func Get(element string) (bool, string) {
 	var elementMap = map[string]string{
 		"H":  "Водород",
 		"He": "Гелий",

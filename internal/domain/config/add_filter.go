@@ -1,9 +1,11 @@
 package config
 
 import (
+	ptable "MaterialsFilter/internal/infrastructure/p_table"
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -48,12 +50,16 @@ func listFilters(config Config) {
 // создается новый фильтр
 func createNewFilter(config Config) (Filter, error) {
 	var filter Filter
+
 	name, err := createNameFilter(config)
 	if err != nil {
 		return Filter{}, err
 	}
 
-	output := "../data/output/" + name + ".csv"
+	output, err := filepath.Abs(filepath.Clean(filepath.Join("..", "data", "output", name+".csv")))
+	if err != nil {
+		return Filter{}, err
+	}
 
 	filterLists, err := addElements()
 	if err != nil {
@@ -83,7 +89,7 @@ func addElements() (map[string]string, error) {
 			return listElements, nil
 		}
 
-		if ok, name := get(element); !ok {
+		if ok, name := ptable.Get(element); !ok {
 			fmt.Printf("Элемент %s не найден в периодической таблице Менделеева. Попробуйте снова.\n", element)
 			continue
 		} else {
@@ -108,6 +114,7 @@ func createNameFilter(config Config) (string, error) {
 			return "", err
 		}
 		if findUnicName(config, name) {
+
 			return name, nil
 		}
 	}

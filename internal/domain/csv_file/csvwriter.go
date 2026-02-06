@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// в дальнейшем можно вынести в infrastructure.Сдесь создаем интерфейс
+// в дальнейшем можно вынести в infrastructure. Здесь создаем интерфейс
 
 // Сохранение отфильтрованного списка
 func (obj *CSVFile) WriteCSV(filteredData map[string][]string, filterName string, path string) error {

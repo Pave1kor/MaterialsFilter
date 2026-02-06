@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// в дальнейшем можно вынести в infrastructure.Сдесь создаем интерфейс
+// в дальнейшем можно вынести в infrastructure. Здесь создаем интерфейс
 func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
 	file, err := os.Open(obj.Input)
 	if err != nil {

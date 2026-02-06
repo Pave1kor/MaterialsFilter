@@ -7,29 +7,33 @@ import (
 )
 
 // Проверка: существует или конфиг файл
-func CheckConfig() bool {
-	_, err := os.Stat("../configs/config.json")
-	return !os.IsNotExist(err)
+func CheckConfig(configPath string) error {
+	_, err := os.Stat(configPath)
+	if err != nil {
+		return err
+	}
+
+	if os.IsNotExist(err) {
+		fmt.Println("Конфигурационный файл не существует. Создаю новый файл...")
+		if err := createConfigFile(configPath); err != nil {
+			return err
+		}
+
+	}
+	return nil
 }
 
 // Создание нового файла конфигурация без фильтра
-func CreateConfigFile() error {
+func createConfigFile(configPath string) error {
 	fmt.Println("Создание нового файла конфигурации.")
-	var filterArr []Filter
 
 	var defaultConfig Config
 	defaultConfig = Config{
-		Input:   "../data/input/inputData.csv",
-		Filters: filterArr,
+		Input:   "",
+		Filters: []Filter{},
 	}
 
-	return MarshalingConfig(defaultConfig)
-}
-
-// Запись конфигурационного файла
-func MarshalingConfig(defaultConfig Config) error {
-
-	jsonFile, err := os.Create("../configs/config.json")
+	jsonFile, err := os.Create(configPath)
 	if err != nil {
 		return err
 	}

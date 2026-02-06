@@ -50,21 +50,20 @@ func findFilter(config *Config) (string, error) {
 		} else {
 
 			listElements(config, nameFilter)
-
-			ok, err := verification()
+			fmt.Println("Желаете ли вы изменить имя фильтра? Введите 'да' или 'нет'.")
+			ok, err := Verification()
 			if err != nil {
 				return "", err
 			}
-			if ok {
+			if !ok {
 				return nameFilter, nil
 			}
 		}
 	}
 }
 
-func verification() (bool, error) {
+func Verification() (bool, error) {
 	for {
-		fmt.Println("Продолжить? Введите 'да', если выбран правильный фильтр и\n 'нет', если нужно выбрать имя другого фильтра ")
 		fmt.Print("Ожидаю: ")
 		ok, err := newLine()
 		if err != nil {
@@ -76,7 +75,7 @@ func verification() (bool, error) {
 		case "нет":
 			return false, nil
 		default:
-			fmt.Println("Введена неизвестная команда!")
+			fmt.Println("Некорректный ввод. Пожалуйста, введите 'да' или 'нет'.")
 			continue
 		}
 	}

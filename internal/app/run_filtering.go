@@ -1,9 +1,9 @@
 package app
 
 import (
+	cfg "MaterialsFilter/internal/domain/config"
 	readerWriterCSV "MaterialsFilter/internal/domain/csv_file"
 	filters "MaterialsFilter/internal/domain/filter"
-	cfg "MaterialsFilter/internal/infrastructure/config"
 	"log"
 )
 

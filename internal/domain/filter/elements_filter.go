@@ -1,4 +1,4 @@
-package materials
+package filter
 
 import (
 	regexp "MaterialsFilter/internal/infrastructure/filter"

@@ -16,6 +16,7 @@ func deleteFilter(config *Config) error {
 			return nil
 		}
 
+		listFilters(*config)
 		fmt.Print("Введите имя фильтра, который необходимо удалить: ")
 		name, err := reader.ReadString('\n')
 		if err != nil {
