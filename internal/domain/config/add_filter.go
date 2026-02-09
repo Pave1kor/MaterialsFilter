@@ -24,7 +24,7 @@ func addNewFilter(config *Config) error {
 
 // проверяется уникальность введенного имени фильтра
 func findUnicName(config Config, name string) bool {
-	if config.Filters == nil {
+	if len(config.Filters) == 0 {
 		return true
 	}
 	for _, filter := range config.Filters {
@@ -114,7 +114,6 @@ func createNameFilter(config Config) (string, error) {
 			return "", err
 		}
 		if findUnicName(config, name) {
-
 			return name, nil
 		}
 	}

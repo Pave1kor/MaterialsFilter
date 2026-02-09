@@ -11,7 +11,7 @@ func deleteFilter(config *Config) error {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		if config.Filters == nil {
+		if len(config.Filters) == 0 {
 			fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
 			return nil
 		}

@@ -3,7 +3,7 @@ package config
 import "fmt"
 
 func deleteAllFilters(config *Config) {
-	if config.Filters == nil {
+	if len(config.Filters) == 0 {
 		fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
 		return
 	}

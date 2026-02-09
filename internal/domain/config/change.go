@@ -5,6 +5,10 @@ import (
 )
 
 func ChangeConfig(config *Config) {
+	if len(config.Filters) == 0 {
+		changeFilter(config)
+	}
+
 	fmt.Println("Желаете ли вы изменить настройки фильтрации? Введите 'да' или 'нет'.")
 	if ok, err := Verification(); err != nil {
 		fmt.Println("Ошибка при проверке ввода:", err)
@@ -38,10 +42,12 @@ func changeFilter(config *Config) {
 			addElementsInFilter(config)
 		case "info":
 			informationAboutConfig(config)
+		case "changeIn":
+			ChangeInputFile(config)
 		case "command":
 			CommandsInformation()
 		case "run":
-			if config.Filters == nil {
+			if len(config.Filters) == 0 {
 				fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
 				continue
 			}

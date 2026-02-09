@@ -9,7 +9,7 @@ import (
 func addElementsInFilter(config *Config) error {
 	var newElement map[string]string
 
-	if config.Filters == nil {
+	if len(config.Filters) == 0 {
 		fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
 		return nil
 	}
@@ -50,7 +50,7 @@ func findFilter(config *Config) (string, error) {
 		} else {
 
 			listElements(config, nameFilter)
-			fmt.Println("Желаете ли вы изменить имя фильтра? Введите 'да' или 'нет'.")
+			fmt.Println("Желаете ли вы выбрать другой фильтр? Введите 'да' или 'нет'.")
 			ok, err := Verification()
 			if err != nil {
 				return "", err

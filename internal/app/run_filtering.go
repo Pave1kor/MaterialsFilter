@@ -15,9 +15,8 @@ func Run(config *cfg.Config) {
 	}
 	for _, filter := range config.Filters {
 		filteredData := filters.ElementsFilter(data, filter.Filter)
-		if err := csvFile.WriteCSV(filteredData, filter.Name, filter.Output); err != nil {
+		if err := csvFile.WriteCSV(filteredData, filter.Filter, filter.Name, filter.Output); err != nil {
 			log.Fatal(err)
 		}
 	}
-
 }

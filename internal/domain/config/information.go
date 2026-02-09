@@ -6,9 +6,9 @@ import (
 )
 
 // Вывод в терминал информации о текущих настройках фильтров и входного файла
-func OutputData(config *Config) {
+func ConfigData(config *Config) {
 	fmt.Println("Путь к входному файлу:", config.Input)
-	if config.Filters == nil {
+	if len(config.Filters) == 0 {
 		fmt.Println("Фильтры отсутвуют! Добавьте их с помощью команды 'addF'.")
 	}
 	for _, filter := range config.Filters {
@@ -35,14 +35,15 @@ func listElements(config *Config, nameFilter string) {
 // Вывод в терминал доступных команд для изменения настроек фильтрации
 func CommandsInformation() {
 	fmt.Println("\nДоступные команды для изменения настроек фильтрации:")
-	fmt.Println("addF    - добавить новый фильтр")
-	fmt.Println("delF    - удалить существующий фильтр")
-	fmt.Println("delAllF - удалить все фильтры")
-	fmt.Println("addEl   - добавить элементы в существующий фильтр")
-	fmt.Println("delEl   - удалить элементы из существующего фильтра")
-	fmt.Println("run     - сохранить изменения в файл настроек и выйти из режима изменения")
-	fmt.Println("info    - показать информацию о текущих настройках")
-	fmt.Println("command - показать команды для изменения настроек фильтрации")
+	fmt.Println("addF     - добавить новый фильтр")
+	fmt.Println("delF     - удалить существующий фильтр")
+	fmt.Println("delAllF  - удалить все фильтры")
+	fmt.Println("addEl    - добавить элементы в существующий фильтр")
+	fmt.Println("delEl    - удалить элементы из существующего фильтра")
+	fmt.Println("run      - сохранить изменения в файл настроек и выйти из режима изменения")
+	fmt.Println("changeIn - изменить имя файла с входными данными")
+	fmt.Println("info     - показать информацию о текущих настройках")
+	fmt.Println("command  - показать команды для изменения настроек фильтрации")
 }
 
 // В терминале выводится информация обо всех фильтрах, загруженных из конфигурационного файла
@@ -50,7 +51,7 @@ func informationAboutConfig(config *Config) {
 	fmt.Println("\nФайл настроек.")
 	fmt.Printf("Данные для обработки должны находиться по пути: %s\n", config.Input)
 
-	if config.Filters == nil {
+	if len(config.Filters) == 0 {
 		fmt.Println("Фильтры отсутвуют! Добавьте их с помощью команды 'addF'.")
 	}
 
