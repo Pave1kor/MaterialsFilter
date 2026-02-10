@@ -5,7 +5,8 @@ import (
 	"fmt"
 )
 
-func ChangeInputFile(config *Config) error {
+func changeInputFile(config *Config) error {
+	fmt.Println("Изменение обрабатываемого файла.")
 	path := pathFile.New("..")
 	inputPath, err := path.Input()
 	if err != nil {

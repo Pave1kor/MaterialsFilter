@@ -2,27 +2,21 @@ package config
 
 import (
 	ptable "MaterialsFilter/internal/infrastructure/p_table"
-	"bufio"
 	"fmt"
-	"os"
-	"strings"
 )
 
-func deleteElementsInFilter(config *Config) error {
-
-	if len(config.Filters) == 0 {
-		fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
-		return nil
-	}
-	listFilters(*config)
+func deleteElementsInFilter(filters *[]Filter) error {
+	fmt.Println()
+	fmt.Println("Удаление элементов из фильтра.")
+	listFilters(*filters)
 	var deleteElement string
-	nameFilter, err := findFilter(config)
+	nameFilter, err := findFilter(*filters)
 	if err != nil {
 		return err
 	}
 
 	// удаление элементов из фильтра
-	for i, filter := range config.Filters {
+	for i, filter := range *filters {
 		if filter.Name == nameFilter {
 			for {
 				fmt.Print("Введите элемент (или нажмите enter для завершения): ")
@@ -41,34 +35,23 @@ func deleteElementsInFilter(config *Config) error {
 						fmt.Println("Введенный элемент отсутствует в фильтре, попробуйте еще раз.")
 						continue
 					} else {
-						delete(config.Filters[i].Filter, deleteElement)
+						delete((*filters)[i].Filter, deleteElement)
 					}
 				}
 			}
 			fmt.Println("Элементы успешно удалены из фильтра")
-			listElements(config, nameFilter)
+			listElements(*filters, nameFilter)
 		}
 	}
 	return nil
 }
 
 // проверка существования фильтра по имени
-func existsFilter(nameFilter string, config *Config) bool {
-	for _, filter := range config.Filters {
+func existsFilter(nameFilter string, filters []Filter) bool {
+	for _, filter := range filters {
 		if filter.Name == nameFilter {
 			return true
 		}
 	}
 	return false
-}
-
-// чтение новой строки из терминала
-func newLine() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	newLine, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	newLine = strings.TrimSpace(newLine)
-	return newLine, nil
 }

@@ -12,11 +12,9 @@ func CheckConfig(configPath string) error {
 	_, err := os.Stat(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("Конфигурационный файл не существует!")
 			if err := createConfigFile(configPath); err != nil {
 				return err
 			}
-
 		}
 	}
 
@@ -25,6 +23,8 @@ func CheckConfig(configPath string) error {
 
 // Создание нового файла конфигурация без фильтра
 func createConfigFile(configPath string) error {
+	fmt.Println()
+	fmt.Println("Конфигурационный файл не существует!")
 	fmt.Println("Создание нового файла конфигурации.")
 	pathInput := path.New("..")
 

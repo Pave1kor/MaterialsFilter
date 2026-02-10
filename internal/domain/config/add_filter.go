@@ -2,81 +2,52 @@ package config
 
 import (
 	ptable "MaterialsFilter/internal/infrastructure/p_table"
-	"bufio"
+	path "MaterialsFilter/internal/infrastructure/path"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 )
 
 // добавление нового фильтра
-func addNewFilter(config *Config) error {
-
-	newFiter, err := createNewFilter(*config)
+func addNewFilter(filters []Filter) error {
+	fmt.Println("Добавление нового фильтра.")
+	newFilter, err := createNewFilter()
 	if err != nil {
 		return err
 	}
-	config.Filters = append(config.Filters, newFiter)
-	fmt.Printf("Фильтр %s успешно создан!\n", newFiter.Name)
-	listFilters(*config)
+	filters = append(filters, newFilter)
+	fmt.Printf("Фильтр %s успешно создан!\n", newFilter.Name)
+	listFilters(filters)
 	return nil
 }
 
-// проверяется уникальность введенного имени фильтра
-func findUnicName(config Config, name string) bool {
-	if len(config.Filters) == 0 {
-		return true
-	}
-	for _, filter := range config.Filters {
-		if filter.Name == name {
-			fmt.Println("Название фильта должно быть уникальным!")
-			listFilters(config)
-			return false
-		}
-	}
-	return true
-}
-
-func listFilters(config Config) {
-	fmt.Println("Список фильтров следующий:")
-	var filterList []string
-
-	for _, nameF := range config.Filters {
-		filterList = append(filterList, nameF.Name)
-	}
-	fmt.Println(strings.Join(filterList, ", "))
-}
-
 // создается новый фильтр
-func createNewFilter(config Config) (Filter, error) {
+func createNewFilter() (Filter, error) {
 	var filter Filter
 
-	name, err := createNameFilter(config)
+	pathFile := path.New("..")
+	output, err := pathFile.Output()
 	if err != nil {
 		return Filter{}, err
 	}
 
-	output, err := filepath.Abs(filepath.Clean(filepath.Join("..", "data", "output", name+".csv")))
-	if err != nil {
-		return Filter{}, err
-	}
-
-	filterLists, err := addElements()
+	filterLists, err := readElements()
 	if err != nil {
 		return Filter{}, err
 	}
 
 	filter.Filter = filterLists
-	filter.Name = name
+	filter.Name = strings.TrimRight(filepath.Base(output), ".csv")
 	filter.Output = output
 
 	return filter, nil
 }
 
 // создание списка элементов для фильтрации
-func addElements() (map[string]string, error) {
+func readElements() (map[string]string, error) {
 	listElements := make(map[string]string)
-
+	fmt.Println()
+	fmt.Println("Создание списка элементов для фильтрации.")
 	for {
 		fmt.Print("Введите элемент (или нажмите enter для завершения): ")
 
@@ -98,23 +69,6 @@ func addElements() (map[string]string, error) {
 				continue
 			}
 			listElements[element] = name
-		}
-	}
-}
-
-// Добавление фильтра с уникальным именем
-func createNameFilter(config Config) (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Println()
-		fmt.Print("Введите имя фильтра: ")
-		name, err := reader.ReadString('\n')
-		name = strings.TrimSpace(name)
-		if err != nil {
-			return "", err
-		}
-		if findUnicName(config, name) {
-			return name, nil
 		}
 	}
 }

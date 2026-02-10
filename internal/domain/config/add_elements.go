@@ -1,82 +1,70 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 )
 
 // добавления элементов в существующий фильтр
-func addElementsInFilter(config *Config) error {
+func addElementsInFilter(filters *[]Filter) error {
+	fmt.Println()
+	fmt.Println("Добавление новых элементов в фильтр.")
 	var newElement map[string]string
 
-	if len(config.Filters) == 0 {
-		fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
-		return nil
-	}
-
 	//поиск фильтра
-	nameFilter, err := findFilter(config)
+	nameFilter, err := findFilter(*filters)
 	if err != nil {
 		return err
 	}
 
 	//ввод списка элементов
-	newElement, err = addElements()
+	newElement, err = readElements()
 	if err != nil {
 		return err
 	}
 
 	//добавление новых элементов в фильтр
-	for _, filter := range config.Filters {
-		if filter.Name == nameFilter {
-			maps.Copy(filter.Filter, newElement)
-			fmt.Printf("Введенные элементы успешно добавлены в фильтр %s.\n", filter.Name)
+	for _, filter := range *filters {
+		if filter.Name != nameFilter {
+			continue
 		}
+		maps.Copy(filter.Filter, newElement)
+		fmt.Printf("Введенные элементы успешно добавлены в фильтр %s.\n", filter.Name)
+		break
 	}
 
 	return nil
 
 }
 
-func findFilter(config *Config) (string, error) {
+// проверка: найти уникальный фильтр
+func findFilter(filters []Filter) (string, error) {
+	listFilters(filters)
 	for {
+
 		fmt.Print("Введите имя фильтра: ")
 		nameFilter, err := newLine()
 		if err != nil {
 			return "", err
 		}
-		if !existsFilter(nameFilter, config) {
+
+		if !existsFilter(nameFilter, filters) {
 			fmt.Println("Введено неизвестное имя фильтра!")
-		} else {
-
-			listElements(config, nameFilter)
-			fmt.Println("Желаете ли вы выбрать другой фильтр? Введите 'да' или 'нет'.")
-			ok, err := Verification()
-			if err != nil {
-				return "", err
-			}
-			if !ok {
-				return nameFilter, nil
-			}
-		}
-	}
-}
-
-func Verification() (bool, error) {
-	for {
-		fmt.Print("Ожидаю: ")
-		ok, err := newLine()
-		if err != nil {
-			return false, err
-		}
-		switch ok {
-		case "да":
-			return true, nil
-		case "нет":
-			return false, nil
-		default:
-			fmt.Println("Некорректный ввод. Пожалуйста, введите 'да' или 'нет'.")
 			continue
+		}
+
+		listElements(filters, nameFilter)
+		fmt.Println("Желаете ли вы выбрать другой фильтр?")
+		ok, err := verification()
+		if errors.Is(err, errors.New("ввод отменён")) {
+			return "", err
+		}
+		if err != nil {
+			return "", err
+		}
+		if !ok {
+			return nameFilter, nil
 		}
 	}
 }

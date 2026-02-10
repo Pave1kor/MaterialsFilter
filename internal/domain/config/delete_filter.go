@@ -1,32 +1,23 @@
 package config
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"strings"
 )
 
-func deleteFilter(config *Config) error {
-
-	reader := bufio.NewReader(os.Stdin)
+func deleteFilter(filters *[]Filter) error {
+	fmt.Println()
+	fmt.Println("Удаление фильтра по имени.")
 	for {
-		if len(config.Filters) == 0 {
-			fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
-			return nil
-		}
-
-		listFilters(*config)
+		listFilters(*filters)
 		fmt.Print("Введите имя фильтра, который необходимо удалить: ")
-		name, err := reader.ReadString('\n')
+		name, err := newLine()
 		if err != nil {
 			return err
 		}
-		name = strings.TrimSpace(name)
 
-		for i, filter := range config.Filters {
+		for i, filter := range *filters {
 			if filter.Name == name {
-				config.Filters = append(config.Filters[:i], config.Filters[i+1:]...)
+				*filters = append((*filters)[:i], (*filters)[i+1:]...)
 				fmt.Printf("Фильтр %s успешно удален!", name)
 				return nil
 			}

@@ -43,34 +43,70 @@ func (r *Resolver) Path() error {
 // получение пути для хранения входного файла (исходный)
 func (r *Resolver) Input() (string, error) {
 	for {
-		input, err := getReader("Введите имя обрабатываемого файла \n (файл должен располгаться по пути: `data/input/input.csv`):")
+		input, err := getReader(
+			"Введите имя обрабатываемого файла (например: data.csv): ",
+		)
 		if err != nil {
 			return "", err
 		}
 
-		inputPath, err := absClean(filepath.Join(r.BaseDir, "data", "input", input))
+		if filepath.Ext(input) != ".csv" {
+			fmt.Println("Файл должен быть с расширением '.csv'.")
+			continue
+		}
+
+		if strings.ContainsAny(input, `/\`) {
+			fmt.Println("Введите только имя файла, без пути.")
+			continue
+		}
+		inputPath, err := absClean(
+			filepath.Join(r.BaseDir, "data", "input", input),
+		)
 		if err != nil {
 			return "", err
 		}
-		_, err = os.Stat(inputPath)
-		if err != nil {
+
+		if _, err := os.Stat(inputPath); err != nil {
 			if os.IsNotExist(err) {
-				fmt.Printf("Файла с именем %s не существует, попробуйте еще раз\n", filepath.Base(inputPath))
+				fmt.Printf("Файла %s не существует, попробуйте другое имя.\n", input)
 				continue
 			}
+			return "", err
 		}
+
 		return inputPath, nil
 	}
 }
 
 // получение пути для выходного файла (после обработки)
 func (r *Resolver) Output() (string, error) {
-	output, err := getReader("Введите имя выходного файла  (файл должен располгаться по пути: `data/input/input.csv`):")
-	if err != nil {
-		return "", err
-	}
+	for {
+		output, err := getReader(
+			"Введите имя выходного файла (например: result.csv): ",
+		)
+		if err != nil {
+			return "", err
+		}
+		if filepath.Ext(output) != ".csv" {
+			fmt.Println("Файл должен быть с расширением '.csv'.")
+			continue
+		}
 
-	return absClean(filepath.Join(r.BaseDir, "data", "output", output))
+		if strings.ContainsAny(output, `/\`) {
+			fmt.Println("Введите только имя файла, без пути.")
+			continue
+		}
+
+		outputPath, err := absClean(
+			filepath.Join(r.BaseDir, "data", "output", output),
+		)
+
+		if _, err = os.Stat(outputPath); err == nil {
+			fmt.Printf("Файл %s уже существует, попробуйте другое имя.\n", filepath.Base(outputPath))
+			continue
+		}
+		return outputPath, nil
+	}
 }
 
 // получение пути файла конфигурации

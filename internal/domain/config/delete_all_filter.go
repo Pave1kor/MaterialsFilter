@@ -2,10 +2,8 @@ package config
 
 import "fmt"
 
-func deleteAllFilters(config *Config) {
-	if len(config.Filters) == 0 {
-		fmt.Println("Фильтры отсутвуют в файле настроек. Пожалуйста добавьте новый фильтр!")
-		return
-	}
-	config.Filters = nil
+func deleteAllFilters(filters *[]Filter) {
+	fmt.Println()
+	fmt.Println("Удаление всех фильтров.")
+	*filters = nil
 }
