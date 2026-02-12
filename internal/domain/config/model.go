@@ -1,7 +1,9 @@
 package config
 
 import (
+	path "MaterialsFilter/internal/infrastructure/path"
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -16,26 +18,75 @@ type Filter struct {
 	Output string            `json:"output"`
 }
 
-func NewConfig(configPath string) (*Config, error) {
+func NewConfig() (*Config, error) {
 
-	var cfg Config
-	err := UnmarshalingConfig(configPath, &cfg)
+	pathFile := path.New("..")
+	configPath, err := pathFile.Config()
 	if err != nil {
 		return nil, err
 	}
 
-	return &cfg, nil
+	if !fileExist(configPath) {
+		createJSONFile(configPath)
+	}
+	obj, err := readJSON(configPath)
+	if err != nil {
+		return nil, err
+	}
+	return &obj, nil
 }
 
-func UnmarshalingConfig(configPath string, config *Config) error {
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return err
+// Проверка: существует или конфиг файл
+func fileExist(configPath string) bool {
+
+	if _, err := os.Stat(configPath); err == nil {
+		return true
 	}
 
-	err = json.Unmarshal(data, config)
+	return false
+}
+
+// читаем данные из json
+func readJSON(configPath string) (Config, error) {
+	var jsonFile Config
+	fileData, err := os.ReadFile(configPath)
+	if err != nil {
+		return Config{}, err
+	}
+	err = json.Unmarshal(fileData, &jsonFile)
+	if err != nil {
+		return Config{}, err
+	}
+	return jsonFile, nil
+}
+
+// Создание нового файла конфигурация без фильтра
+func createJSONFile(configPath string) error {
+
+	fmt.Println()
+	fmt.Println("Файл настроек отсутвует!")
+	fmt.Println("Создание нового файла настроек.")
+	pathInput := path.New("..")
+
+	input, err := pathInput.Input()
 	if err != nil {
 		return err
 	}
-	return nil
+	var defaultConfig Config
+	defaultConfig = Config{
+		Input:   input,
+		Filters: []Filter{}}
+
+	jsonFile, err := os.Create(configPath)
+	if err != nil {
+		return err
+	}
+	defer jsonFile.Close()
+
+	jsonData, err := json.MarshalIndent(defaultConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = jsonFile.Write(jsonData)
+	return err
 }

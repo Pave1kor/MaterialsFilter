@@ -42,9 +42,15 @@ func (r *Resolver) Path() error {
 
 // получение пути для хранения входного файла (исходный)
 func (r *Resolver) Input() (string, error) {
+	input, err := filepath.Abs(filepath.Clean(filepath.Join("data", "input")))
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Убедитесь, что файл с исходными данными находится в папке input: %s\n", input)
+	fmt.Println("")
 	for {
 		input, err := getReader(
-			"Введите имя обрабатываемого файла (например: data.csv): ",
+			"Введите имя файла с исходными данными (например: data.csv): ",
 		)
 		if err != nil {
 			return "", err
@@ -82,7 +88,7 @@ func (r *Resolver) Input() (string, error) {
 func (r *Resolver) Output() (string, error) {
 	for {
 		output, err := getReader(
-			"Введите имя выходного файла (например: result.csv): ",
+			"Введите имя файла в котором будут сохраняться данные после обработки (например: result.csv): ",
 		)
 		if err != nil {
 			return "", err
@@ -105,6 +111,12 @@ func (r *Resolver) Output() (string, error) {
 			fmt.Printf("Файл %s уже существует, попробуйте другое имя.\n", filepath.Base(outputPath))
 			continue
 		}
+		file, err := os.Create(outputPath)
+		if err != nil {
+			return "", err
+		}
+		defer file.Close()
+
 		return outputPath, nil
 	}
 }
