@@ -1,6 +1,6 @@
 package p_table
 
-func Get(element string) (bool, string) {
+func Get(element string) bool {
 	var elementMap = map[string]string{
 		"H":  "Водород",
 		"He": "Гелий",
@@ -128,6 +128,6 @@ func Get(element string) (bool, string) {
 		"Ts": "Теннессин",
 		"Og": "Оганесон",
 	}
-	name, exists := elementMap[element]
-	return exists, name
+	_, exists := elementMap[element]
+	return exists
 }

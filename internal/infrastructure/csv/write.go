@@ -1,4 +1,4 @@
-package csvfile
+package csv
 
 import (
 	"encoding/csv"
@@ -8,7 +8,7 @@ import (
 // в дальнейшем можно вынести в infrastructure. Здесь создаем интерфейс
 
 // Сохранение отфильтрованного списка
-func (obj *CSVFile) WriteCSV(filteredData map[string][]string, listElements map[string]string, filterName string, path string) error {
+func (obj *CSVFile) WriteCSV(filteredData map[string][]string, listElements map[string]struct{}, filterName string, path string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -18,7 +18,7 @@ func (obj *CSVFile) WriteCSV(filteredData map[string][]string, listElements map[
 	return nil
 }
 
-func createListElements(listElements map[string]string) []string {
+func createListElements(listElements map[string]struct{}) []string {
 	var list = make([]string, 0, len(listElements))
 	list = append(list, "Список элементов для фильтрации")
 	for element := range listElements {

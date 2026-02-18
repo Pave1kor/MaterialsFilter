@@ -5,7 +5,7 @@ import (
 )
 
 // фильтр соединений
-func ElementsFilter(data map[string][]string, filter map[string]string) map[string][]string {
+func ElementsFilter(data map[string][]string, filter map[string]struct{}) map[string][]string {
 	results := make(map[string][]string)
 	for formula, information := range data {
 		elements, err := regexp.RegexpFilter(formula)
@@ -21,7 +21,7 @@ func ElementsFilter(data map[string][]string, filter map[string]string) map[stri
 
 // обработка данных по соответствующему фильтру
 
-func containOnlyAllowed(elements []string, filter map[string]string) bool {
+func containOnlyAllowed(elements []string, filter map[string]struct{}) bool {
 	if len(elements) == 0 {
 		return false
 	}

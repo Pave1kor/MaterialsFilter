@@ -7,16 +7,18 @@ import (
 )
 
 func ChangeConfig(config *cfg.Config) {
-	if !cfg.HasInputName(config.Input) {
+	if len(config.Input) == 0 {
+		fmt.Println("Не задано имя файла с исходными данными.")
 		cli.ChangeInputFileUI(config)
 	}
 
-	if !cfg.HasFilters(config.Filters) {
+	if len(config.Filters) == 0 {
+		fmt.Println("Список фильтров пуст.")
 		cli.AddNewFilterUI(config)
 	}
 
 	fmt.Println("Желаете ли вы изменить настройки фильтрации?")
-	if ok, err := cfg.Verification(); err != nil {
+	if ok, err := cli.Verification(); err != nil {
 		fmt.Println("Ошибка при проверке ввода:", err)
 		return
 	} else if ok {
@@ -30,7 +32,7 @@ func changeFilter(config *cfg.Config) {
 	for {
 		fmt.Println()
 		fmt.Print("Команда: ")
-		command, err := cfg.NewLine()
+		command, err := cli.NewLine()
 		if err != nil {
 			fmt.Println("Ошибка при чтении ввода:", err)
 			continue

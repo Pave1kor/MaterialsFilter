@@ -2,21 +2,21 @@ package app
 
 import (
 	cfg "MaterialsFilter/internal/domain/config"
-	readerWriterCSV "MaterialsFilter/internal/domain/csv_file"
 	filters "MaterialsFilter/internal/domain/filter"
-	"log"
+	readerWriterCSV "MaterialsFilter/internal/infrastructure/csv"
 )
 
-func Run(config *cfg.Config) {
+func Run(config *cfg.Config) error {
 	csvFile := readerWriterCSV.NewCSVFile(config.Input)
 	data, err := csvFile.ReadCSV()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	for _, filter := range config.Filters {
 		filteredData := filters.ElementsFilter(data, filter.Filter)
 		if err := csvFile.WriteCSV(filteredData, filter.Filter, filter.Name, filter.Output); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+	return nil
 }

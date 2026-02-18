@@ -1,4 +1,4 @@
-package csvfile
+package csv
 
 type CSVFile struct {
 	Input  string
