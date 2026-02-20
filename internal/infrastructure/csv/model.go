@@ -1,9 +1,10 @@
 package csv
 
 type CSVFile struct {
-	Input  string
-	Output string
-	Comma  rune
+	Input     string
+	Headlines []string
+	Table     []string
+	Comma     rune
 }
 
 func NewCSVFile(input string) *CSVFile {

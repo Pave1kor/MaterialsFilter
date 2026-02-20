@@ -99,7 +99,7 @@ func Output() (string, error) {
 	}
 	for {
 		output, err := getReader(
-			"Введите имя файла в котором будут сохраняться данные после обработки (например: result.csv): ",
+			"Пожалуйста, введите имя файла для сохранения результатов (например: result.csv):",
 		)
 		if err != nil {
 			return "", err

@@ -3,41 +3,50 @@ package csv
 import (
 	"encoding/csv"
 	"os"
+	"slices"
+	"strings"
 )
 
-// в дальнейшем можно вынести в infrastructure. Здесь создаем интерфейс
-
 // Сохранение отфильтрованного списка
-func (obj *CSVFile) WriteCSV(filteredData map[string][]string, listElements map[string]struct{}, filterName string, path string) error {
+func (obj *CSVFile) WriteCSV(filteredData map[string][]string, listElements map[string]struct{}, filterName string, path string, headlines []string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	writeFile(file, createFlterName(filterName), createListElements(listElements), filteredData)
+
+	writeFile(file, createFlterName(filterName), createListElements(listElements), filteredData, headlines)
 	return nil
 }
 
 func createListElements(listElements map[string]struct{}) []string {
-	var list = make([]string, 0, len(listElements))
-	list = append(list, "Список элементов для фильтрации")
-	for element := range listElements {
-		list = append(list, element)
+	keys := make([]string, 0, len(listElements))
+	for k := range listElements {
+		keys = append(keys, k)
 	}
-	return list
+
+	slices.Sort(keys)
+
+	return []string{
+		"Список элементов для фильтрации",
+		strings.Join(keys, ", "),
+	}
 }
 
 func createFlterName(filterName string) []string {
-	nameArr := [...]string{"Имя фильтра", filterName}
-	return nameArr[:]
+	return []string{
+		"Имя фильтра",
+		filterName,
+	}
 }
 
-func writeFile(file *os.File, filterName []string, listElements []string, filteredData map[string][]string) error {
+func writeFile(file *os.File, filterName []string, listElements []string, filteredData map[string][]string, headlines []string) error {
 	writer := csv.NewWriter(file)
 	writer.Comma = ';'
+
 	writer.Write(filterName)
 	writer.Write(listElements)
-
+	writer.Write(headlines)
 	for _, information := range filteredData {
 		writer.Write(information)
 	}

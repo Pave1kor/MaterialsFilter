@@ -25,5 +25,5 @@ func Load(configPath string, inputFunc func() (string, error)) (*cfg.Config, err
 // Проверка: существует или конфиг файл
 func fileExist(configPath string) bool {
 	_, err := os.Stat(configPath)
-	return os.IsExist(err)
+	return err == nil
 }
