@@ -283,7 +283,7 @@ func ChangeInputFileUI(config *cfg.Config) error {
 	return nil
 }
 
-// Вывод доступных команд режима изменения настроек
+// Вывод в терминал доступных команд режима изменения настроек
 func CommandsInformation() {
 	fmt.Println()
 	fmt.Println("Доступные команды:")
@@ -312,16 +312,14 @@ func listElementsInFilter(filters []cfg.Filter) {
 	}
 }
 
-func WriteJSONUI(config cfg.Config, configPath string, inputFunc func() (string, error)) error {
+// Создание фала настроек (юзер интерфейс)
+func WriteJSONUI(config cfg.Config, configPath string, input string) error {
 	fmt.Println()
 	fmt.Println("Файл настроек отсутствует!")
 	fmt.Println("Создание нового файла настроек.")
-	input, err := inputFunc()
-	if err != nil {
-		return err
-	}
+
 	config.Input = input
-	err = json.WriteJSON(configPath, config)
+	err := json.WriteJSON(configPath, config)
 	if err != nil {
 		return err
 	}
@@ -330,9 +328,9 @@ func WriteJSONUI(config cfg.Config, configPath string, inputFunc func() (string,
 	return nil
 }
 
+// Изменение заголовков столбцов
 func ChangeHeadlinesUI(csv *csvFile.CSVFile) error {
 	fmt.Println("\nИзменение заголовков столбцов.")
-	viewTable(csv.Headlines, csv.Table)
 	newHeadlines := make([]string, 0, len(csv.Headlines))
 	fmt.Println("Введите новый заголовок (Enter — оставить как есть).")
 	for _, headline := range csv.Headlines {
@@ -352,32 +350,22 @@ func ChangeHeadlinesUI(csv *csvFile.CSVFile) error {
 	return nil
 }
 
-// Преобразуем слайс строк в []interface{} для fmt.Printf
 func toInterfaceSlice(s []string) []interface{} {
-	r := make([]interface{}, len(s))
+	r := make([]any, len(s))
 	for i := range s {
 		r[i] = s[i]
 	}
 	return r
 }
 
-func viewTable(headlines []string, data []string) {
+// Вывод в терминал таблицы с данными (шапка таблицы и первая строка)
+func ViewTable(headlines []string, data []string) {
 
 	widths := make([]int, len(headlines))
-	all := append([]string{}, headlines...)
-	if len(data) > 0 {
-		all = append(all, data...)
-	}
-
-	for i := range headlines {
-		maxWidth := 0
-		for j := i; j < len(all); j += len(headlines) {
-			w := runewidth.StringWidth(all[j])
-			if w > maxWidth {
-				maxWidth = w
-			}
-		}
-		widths[i] = maxWidth
+	for i := range widths {
+		line1 := runewidth.StringWidth(headlines[i])
+		line2 := runewidth.StringWidth(data[i])
+		widths[i] = max(line1, line2)
 	}
 
 	line := make([]string, len(widths))
@@ -388,23 +376,24 @@ func viewTable(headlines []string, data []string) {
 
 	fmt.Println()
 	fmt.Println(border)
-	headLineStr := "|"
+	var headLineStr strings.Builder
+	headLineStr.WriteString("|")
 	for i, h := range headlines {
-		headLineStr += " " + padRight(h, widths[i]) + " |"
+		headLineStr.WriteString(" " + padRight(h, widths[i]) + " |")
 	}
-	fmt.Println(headLineStr)
+	fmt.Println(headLineStr.String())
 	fmt.Println(border)
 
-	// печать строки данных
-	dataStr := "|"
+	var dataStr strings.Builder
+	dataStr.WriteString("|")
 	for i, d := range data {
 		if isNumber(d) {
-			dataStr += " " + padLeft(d, widths[i]) + " |"
+			dataStr.WriteString(" " + padLeft(d, widths[i]) + " |")
 		} else {
-			dataStr += " " + padRight(d, widths[i]) + " |"
+			dataStr.WriteString(" " + padRight(d, widths[i]) + " |")
 		}
 	}
-	fmt.Println(dataStr)
+	fmt.Println(dataStr.String())
 	fmt.Println(border)
 }
 

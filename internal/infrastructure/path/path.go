@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// создание папок для хранения файлов
+// Создание каталогов для хранения файлов input, output, config
 func Path() error {
 
 	exe, err := os.Executable()
@@ -43,7 +43,7 @@ func Path() error {
 	return nil
 }
 
-// получение пути для хранения входного файла (исходный)
+// Получение пути файла с исходными данными
 func Input() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
@@ -53,6 +53,7 @@ func Input() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	fmt.Printf("Поместите файл с исходными данными в папку input: %s\n", input)
 	fmt.Println("")
 	for {
@@ -91,7 +92,7 @@ func Input() (string, error) {
 	}
 }
 
-// получение пути для выходного файла (после обработки)
+// Получение пути файла с результатами обработки
 func Output() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
@@ -132,7 +133,7 @@ func Output() (string, error) {
 	}
 }
 
-// получение пути файла конфигурации
+// Получение пути файла конфигурации
 func Config() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {

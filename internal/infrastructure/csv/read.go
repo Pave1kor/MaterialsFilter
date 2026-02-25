@@ -7,9 +7,10 @@ import (
 	"strings"
 )
 
-// в дальнейшем можно вынести в infrastructure. Здесь создаем интерфейс
+// Чтение данных из csv файла
 func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
-	headBool := true
+	m := make(map[string][]string)
+
 	file, err := os.Open(obj.Input)
 	if err != nil {
 		return nil, err
@@ -18,26 +19,25 @@ func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
 
 	r := csv.NewReader(file)
 	r.Comma = obj.Comma
-	m := make(map[string][]string)
+
 	record, err := r.Read()
+	if err != nil {
+		return nil, err
+	}
 	record = trimEmptyTail(record)
 	obj.Headlines = record
-	for {
-		record, err := r.Read()
-		if err == io.EOF {
-			break
-		}
+
+	for record, err := r.Read(); err != io.EOF; {
 		if err != nil {
 			return nil, err
 		}
 		record = trimEmptyTail(record)
-
-		if headBool {
-			obj.Table = record
-			headBool = false
-		}
-
 		m[record[0]] = record
+	}
+
+	for _, val := range m {
+		obj.Table = val
+		break
 	}
 	return m, nil
 }

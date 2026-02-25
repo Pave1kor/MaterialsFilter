@@ -62,7 +62,7 @@ func (cfg *Config) DeleteAllFilters() {
 	cfg.Filters = nil
 }
 
-// удаление элементов из фильтра
+// Удаление элементов из фильтра
 func (cfg *Config) DeleteElementsInFilter(nameFilter string, listElements []string) {
 
 	for i, filter := range cfg.Filters {
@@ -84,6 +84,8 @@ func NewFilter(nameFilter string, filters []Filter) bool {
 	}
 	return true
 }
+
+// Удаление фильтра по имени
 func (cfg *Config) DeleteFilter(name string) error {
 	for i, filter := range cfg.Filters {
 		if filter.Name == name {

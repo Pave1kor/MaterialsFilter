@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// читаем данные из json
+// Получение настроек из файла конфигурации
 func ReadJSON(configPath string) (cfg.Config, error) {
 	var jsonFile cfg.Config
 	fileData, err := os.ReadFile(configPath)

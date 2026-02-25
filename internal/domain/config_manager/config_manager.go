@@ -7,6 +7,7 @@ import (
 )
 
 func ChangeConfig(config *cfg.Config) {
+
 	if len(config.Input) == 0 {
 		fmt.Println("Не задано имя файла с исходными данными.")
 		cli.ChangeInputFileUI(config)

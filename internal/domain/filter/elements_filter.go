@@ -4,7 +4,7 @@ import (
 	regexp "MaterialsFilter/internal/infrastructure/filter"
 )
 
-// фильтр соединений
+// Фильтр соединений
 func ElementsFilter(data map[string][]string, filter map[string]struct{}) map[string][]string {
 	results := make(map[string][]string)
 	for formula, information := range data {
@@ -19,8 +19,7 @@ func ElementsFilter(data map[string][]string, filter map[string]struct{}) map[st
 	return results
 }
 
-// обработка данных по соответствующему фильтру
-
+// Обработка данных по соответствующему фильтру
 func containOnlyAllowed(elements []string, filter map[string]struct{}) bool {
 	if len(elements) == 0 {
 		return false

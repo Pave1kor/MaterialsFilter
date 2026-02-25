@@ -7,14 +7,15 @@ import (
 	"os"
 )
 
-func Load(configPath string, inputFunc func() (string, error)) (*cfg.Config, error) {
+func LoadConfig(configPath, input string) (*cfg.Config, error) {
 
 	if !fileExist(configPath) {
 		var defaultConfig cfg.Config
-		if err := cli.WriteJSONUI(defaultConfig, configPath, inputFunc); err != nil {
+		if err := cli.WriteJSONUI(defaultConfig, configPath, input); err != nil {
 			return nil, err
 		}
 	}
+
 	obj, err := json.ReadJSON(configPath)
 	if err != nil {
 		return nil, err

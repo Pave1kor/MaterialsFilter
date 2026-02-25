@@ -9,35 +9,39 @@ import (
 )
 
 func Setup() (*cfg.Config, error) {
-	// инициализация пути конфигурационного файла
 
+	// Инициализация каталогов
+	err := pathFile.Path()
+	if err != nil {
+		return nil, err
+	}
+
+	// Инициализация пути конфигурационного файла
 	configPath, err := pathFile.Config()
 	if err != nil {
 		return nil, err
 	}
 
-	inputFunc := func() (string, error) {
-		input, err := pathFile.Input()
-		if err != nil {
-			return "", err
-		}
-		return input, nil
-	}
-
-	// инициализация путей
-	err = pathFile.Path()
+	// Получение пути расположения файла для обработки
+	input, err := pathFile.Input()
 	if err != nil {
 		return nil, err
 	}
 
-	config, err := Load(configPath, inputFunc) //  Создание конфига с начальными значениями
+	//  Создание пустого конфига
+	config, err := LoadConfig(configPath, input)
 	if err != nil {
 		return nil, err
 	}
 
+	// Получение настроек из конфигурационного файла
 	cli.InformationAboutConfig(*config)
-	manager.ChangeConfig(config)              // изменение настроек (добавление, удаление фильтров и т.д.)
-	err = json.WriteJSON(configPath, *config) // сохранение json
+
+	// Изменение настроек (добавление, удаление фильтров и т.д.)
+	manager.ChangeConfig(config)
+
+	// Сохранение настроек
+	err = json.WriteJSON(configPath, *config)
 	if err != nil {
 		return nil, err
 	}
