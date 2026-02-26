@@ -1,4 +1,4 @@
-package p_table
+package periodictable
 
 func Get(element string) bool {
 	var elementMap = map[string]string{

@@ -52,7 +52,7 @@ func HasInputName(input string) bool {
 	return len(input) > 0
 }
 
-// Изменение имени файла с входными данными
+// Изменение имени файла с исходными данными
 func (cfg *Config) ChangeInputFile(inputPath string) {
 	cfg.Input = inputPath
 }

@@ -22,7 +22,7 @@ func Setup() (*cfg.Config, error) {
 		return nil, err
 	}
 
-	// Получение пути расположения файла для обработки
+	// Получение пути расположения файла с исходными данными
 	input, err := pathFile.Input()
 	if err != nil {
 		return nil, err

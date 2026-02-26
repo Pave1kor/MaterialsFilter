@@ -1,7 +1,7 @@
 package filter
 
 import (
-	regexp "MaterialsFilter/internal/infrastructure/filter"
+	regexp "MaterialsFilter/internal/infrastructure/regexp"
 )
 
 // Фильтр соединений
