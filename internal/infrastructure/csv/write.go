@@ -28,14 +28,14 @@ func createListElements(listElements map[string]struct{}) []string {
 	slices.Sort(keys)
 
 	return []string{
-		"Список элементов для фильтрации",
+		"List of elements to filter",
 		strings.Join(keys, ", "),
 	}
 }
 
 func createFlterName(filterName string) []string {
 	return []string{
-		"Имя фильтра",
+		"Filter name",
 		filterName,
 	}
 }

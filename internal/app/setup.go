@@ -2,7 +2,7 @@ package app
 
 import (
 	cfg "MaterialsFilter/internal/domain/config"
-	manager "MaterialsFilter/internal/domain/config_manager"
+	manager "MaterialsFilter/internal/domain/configmanager"
 	json "MaterialsFilter/internal/infrastructure/json"
 	pathFile "MaterialsFilter/internal/infrastructure/path"
 	cli "MaterialsFilter/internal/ui/cli"
