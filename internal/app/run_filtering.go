@@ -10,16 +10,16 @@ import (
 
 func Run(config *cfg.Config) error {
 
-	// Создание объекта csv с начальными настройками (разделитель и имя файла для обработки)
+	// Загрузка  (разделитель и имя файла для обработки)
 	csvFile := readerWriterCSV.NewCSVFile(config.Input)
 
-	// Получение данных из csv файла
+	// Чтение csv файла
 	data, err := csvFile.ReadCSV()
 	if err != nil {
 		return err
 	}
 
-	// Получение таблицы с данными (шабка и одна строка)
+	// Вывод таблицы с данными (шапка и одна строка) в теримнал
 	cli.ViewTable(csvFile.Headlines, csvFile.Table)
 
 	fmt.Println("Желаете ли вы изменить заголовки столбцов?")

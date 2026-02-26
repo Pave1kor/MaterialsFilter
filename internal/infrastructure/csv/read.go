@@ -27,11 +27,18 @@ func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
 	record = trimEmptyTail(record)
 	obj.Headlines = record
 
-	for record, err := r.Read(); err != io.EOF; {
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
 			return nil, err
 		}
 		record = trimEmptyTail(record)
+		if len(record) > 6 {
+			continue
+		}
 		m[record[0]] = record
 	}
 
