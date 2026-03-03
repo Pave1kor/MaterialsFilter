@@ -156,11 +156,17 @@ materialsFilter/    ← директория, в которой запускае
 
 ## 📄 Пример
 
-**Файл с исходными данными** (`data/input/compounds.csv`):
-```csv
-Material (compound);Physical property;Numerical value;Unit;Temperature;Reference
-Bi2Te3;ZT value;0.8;unitless;<150 °C;10.1016/j.rser.2017.01.177
+**Исходный файл** (`data/input/compounds.csv`):  
 ```
+Material (compound);Property;Value
+Bi2Te3;ZT;0.8
+```  
+
+**Результаты фильтрации** (`data/output/result.csv`, например, по элементам `Bi`, `Te`):  
+```
+Material (compound);Property;Value
+Bi2Te3;ZT;0.8
+```  
 
 ---
 
