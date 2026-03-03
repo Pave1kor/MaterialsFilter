@@ -105,3 +105,13 @@ func (cfg Config) ExistFilter(nameFilter string) bool {
 	}
 	return false
 }
+
+func (cfg Config) ChangeOutputFile(nameFilter, output string) {
+	for val, filter := range cfg.Filters {
+		if filter.Name == nameFilter {
+			filter.Output = output
+			cfg.Filters[val] = filter
+			break
+		}
+	}
+}

@@ -2,6 +2,7 @@ package path
 
 import (
 	"bufio"
+	errorsx "MaterialsFilter/pkg/errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,30 +12,20 @@ import (
 // Создание каталогов для хранения файлов input, output, config
 func Path() error {
 
-	exe, err := os.Executable()
+	base, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	base := filepath.Dir(exe)
-	testPath := filepath.Join(base, "configs")
 
-	err = os.MkdirAll(testPath, 0755)
-	if err != nil {
-		base, _ = os.UserConfigDir()
-	}
-
+	baseDir := filepath.Dir(base)
 	dataPath := []string{
-		filepath.Join(base, "configs"),
-		filepath.Join(base, "data", "input"),
-		filepath.Join(base, "data", "output"),
+		filepath.Join(baseDir, "configs"),
+		filepath.Join(baseDir, "data", "input"),
+		filepath.Join(baseDir, "data", "output"),
 	}
 
 	for _, dir := range dataPath {
-		configPath, err := absClean(dir)
-		if err != nil {
-			return err
-		}
-		err = os.MkdirAll(configPath, 0755)
+		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			return err
 		}
@@ -44,93 +35,40 @@ func Path() error {
 }
 
 // Получение пути файла с исходными данными
-func Input() (string, error) {
+func Input(input string) (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return "", err
 	}
-	input, err := filepath.Abs(filepath.Clean(filepath.Join(filepath.Dir(exe), "data", "input")))
-	if err != nil {
+
+	inputPath := filepath.Join(filepath.Dir(exe), "data", "input", input)
+	if _, err := os.Stat(inputPath); err != nil {
 		return "", err
 	}
 
-	fmt.Printf("Поместите файл с исходными данными в папку input: %s\n", input)
-	fmt.Println("")
-	for {
-		input, err := getReader(
-			"Введите имя файла с исходными данными (например: data.csv): ",
-		)
-		if err != nil {
-			return "", err
-		}
-
-		if strings.ToLower(filepath.Ext(input)) != ".csv" {
-			fmt.Println("Файл должен быть с расширением '.csv'.")
-			continue
-		}
-
-		if strings.ContainsAny(input, `/\`) {
-			fmt.Println("Введите только имя файла, без пути.")
-			continue
-		}
-		inputPath, err := absClean(
-			filepath.Join(filepath.Dir(exe), "data", "input", input),
-		)
-		if err != nil {
-			return "", err
-		}
-
-		if _, err := os.Stat(inputPath); err != nil {
-			if os.IsNotExist(err) {
-				fmt.Printf("Файла %s не существует, попробуйте другое имя.\n", input)
-				continue
-			}
-			return "", err
-		}
-
-		return inputPath, nil
-	}
+	return inputPath, nil
 }
 
 // Получение пути файла с результатами обработки
-func Output() (string, error) {
+func Output(output string) (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return "", err
 	}
-	for {
-		output, err := getReader(
-			"Пожалуйста, введите имя файла для сохранения результатов (например: result.csv):",
-		)
-		if err != nil {
-			return "", err
-		}
-		if strings.ToLower(filepath.Ext(output)) != ".csv" {
-			fmt.Println("Файл должен быть с расширением '.csv'.")
-			continue
-		}
 
-		if strings.ContainsAny(output, `/\`) {
-			fmt.Println("Введите только имя файла, без пути.")
-			continue
-		}
+	outputPath := filepath.Join(filepath.Dir(exe), "data", "output", output)
 
-		outputPath, err := absClean(
-			filepath.Join(filepath.Dir(exe), "data", "output", output),
-		)
-
-		if _, err = os.Stat(outputPath); err == nil {
-			fmt.Printf("Файл %s уже существует, попробуйте другое имя.\n", filepath.Base(outputPath))
-			continue
-		}
-		file, err := os.Create(outputPath)
-		if err != nil {
-			return "", err
-		}
-		file.Close()
-
-		return outputPath, nil
+	if _, err = os.Stat(outputPath); err == nil {
+		return "", errorsx.ErrFileExists
 	}
+
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return "", err
+	}
+	file.Close()
+
+	return outputPath, nil
 }
 
 // Получение пути файла конфигурации
@@ -139,11 +77,8 @@ func Config() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return absClean(filepath.Join(filepath.Dir(exe), "configs", "config.json"))
-}
-
-func absClean(s string) (string, error) {
-	return filepath.Abs(filepath.Clean(s))
+	path := filepath.Join(filepath.Dir(exe), "configs", "config.json")
+	return path, nil
 }
 
 func getReader(note string) (string, error) {

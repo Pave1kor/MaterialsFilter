@@ -40,21 +40,23 @@ func changeFilter(config *cfg.Config) {
 		}
 
 		switch command {
-		case "addF":
+		case "add-filter":
 			cli.AddNewFilterUI(config)
-		case "delF":
+		case "del-filter":
 			cli.DeleteFilterUI(config)
-		case "delAllF":
+		case "clear-filters":
 			cli.DeleteAllFiltersUI(config)
-		case "delEl":
+		case "del-elements":
 			cli.DeleteElementsInFilterUI(config)
-		case "addEl":
+		case "add-elements":
 			cli.AddElementsInFilterUI(config)
 		case "info":
 			cli.InformationAboutConfig(*config)
-		case "changeIn":
+		case "set-input-file":
 			cli.ChangeInputFileUI(config)
-		case "command":
+		case "set-output-file":
+			cli.ChangeOutputFileUI(config)
+		case "help":
 			cli.CommandsInformation()
 		case "run":
 			return

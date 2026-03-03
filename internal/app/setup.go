@@ -23,7 +23,7 @@ func Setup() (*cfg.Config, error) {
 	}
 
 	// Получение пути расположения файла с исходными данными
-	input, err := pathFile.Input()
+	input, err := cli.InputUI()
 	if err != nil {
 		return nil, err
 	}

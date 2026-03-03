@@ -6,6 +6,7 @@ import (
 	json "MaterialsFilter/internal/infrastructure/json"
 	pathFile "MaterialsFilter/internal/infrastructure/path"
 	ptable "MaterialsFilter/internal/infrastructure/periodictable"
+	errorsx "MaterialsFilter/pkg/errors"
 	"bufio"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/mattn/go-runewidth"
 )
@@ -56,8 +58,13 @@ func createListElements() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		if newElement == "" {
+
+		if len(newElement) == 0 && len(listElements) > 0 {
 			break
+		}
+		if len(listElements) == 0 && len(newElement) == 0 {
+			fmt.Println("Фильтр пуст. Добавьте хотя бы один химический элемент.")
+			continue
 		}
 		if !ptable.Get(newElement) {
 			fmt.Println("Неизвестный химический элемент. Попробуйте снова.")
@@ -68,6 +75,7 @@ func createListElements() ([]string, error) {
 			fmt.Println("Этот элемент уже добавлен. Попробуйте снова.")
 			continue
 		}
+
 		listElements = append(listElements, newElement)
 	}
 	return listElements, nil
@@ -87,6 +95,23 @@ func verificationFilter(config *cfg.Config, mustExist bool) (string, error) {
 		nameFilter = strings.TrimSpace(nameFilter)
 		if nameFilter == "" {
 			fmt.Println("Имя фильтра не может быть пустым.")
+			continue
+		}
+
+		if strings.ContainsFunc(nameFilter, func(r rune) bool {
+			return unicode.IsSpace(r)
+		}) {
+			fmt.Println("В имени не должно быть пробелов.")
+			continue
+		}
+
+		if strings.ContainsFunc(nameFilter, func(r rune) bool {
+			return !(unicode.Is(unicode.Latin, r) ||
+				unicode.IsDigit(r) ||
+				r == '_' ||
+				r == '-')
+		}) {
+			fmt.Println("Имя может содержать только латинские буквы, цифры, '_' и '-'.")
 			continue
 		}
 
@@ -160,7 +185,7 @@ func AddNewFilterUI(config *cfg.Config) error {
 		return err
 	}
 
-	output, err := pathFile.Output()
+	output, err := OutputUI()
 	if err != nil {
 		return err
 	}
@@ -272,7 +297,7 @@ func ChangeInputFileUI(config *cfg.Config) error {
 	fmt.Println()
 	fmt.Println("Изменение имени файла с исходными данными.")
 
-	inputPath, err := pathFile.Input()
+	inputPath, err := InputUI()
 	if err != nil {
 		return err
 	}
@@ -288,27 +313,32 @@ func CommandsInformation() {
 	fmt.Println()
 	fmt.Println("Доступные команды:")
 	fmt.Println("------------------")
-	fmt.Println("addF     — добавить новый фильтр")
-	fmt.Println("delF     — удалить существующий фильтр")
-	fmt.Println("delAllF  — удалить все фильтры")
-	fmt.Println("addEl    — добавить элементы в фильтр")
-	fmt.Println("delEl    — удалить элементы из фильтра")
-	fmt.Println("changeIn — изменить имя файла с исходными данными")
-	fmt.Println("info     — показать текущие настройки")
-	fmt.Println("command  — показать эту справку")
-	fmt.Println("run      — сохранить изменения и выйти")
+	fmt.Println("add-filter       — добавить новый фильтр")
+	fmt.Println("del-filter       — удалить существующий фильтр")
+	fmt.Println("clear-filters    — удалить все фильтры")
+	fmt.Println("add-elements     — добавить элементы в фильтр")
+	fmt.Println("del-elements     — удалить элементы из фильтра")
+	fmt.Println("set-input-file   — изменить имя файла с исходными данными")
+	fmt.Println("set-output-file  — изменить имя файла с данными после фильтрации")
+	fmt.Println("info             — показать текущие настройки")
+	fmt.Println("help             — показать эту справку")
+	fmt.Println("run              — сохранить изменения и выйти")
 	fmt.Println()
 }
 
 // Вывод в терминал списка элементов всех доступных фильтров
 func listElementsInFilter(filters []cfg.Filter) {
-	for _, filter := range filters {
+	fmt.Println("Список фильтров.")
+	for val, filter := range filters {
 		var elements []string
 		for element := range filter.Filter {
 			elements = append(elements, element)
 		}
 		sort.Strings(elements)
-		fmt.Printf("Список элементов фильтра %s следующий: %s\n", filter.Name, strings.Join(elements, ", "))
+		fmt.Printf("\nФильтр %d.\n", val+1)
+		fmt.Printf("Название фильтра: %s\n", filter.Name)
+		fmt.Printf("Список элементов: %s\n", strings.Join(elements, ", "))
+		fmt.Printf("Имя файла для сохранения результатов фильтрации: %s\n", filepath.Base(filter.Output))
 	}
 }
 
@@ -413,6 +443,23 @@ func padLeft(s string, width int) string {
 	return strings.Repeat(" ", width-w) + s
 }
 
+func ChangeOutputFileUI(config *cfg.Config) error {
+	fmt.Println("\nИзменение имени файла для сохранения результатов обработки.")
+	listElementsInFilter(config.Filters)
+
+	filterName, err := verificationFilter(config, true)
+	if err != nil {
+		return err
+	}
+
+	output, err := OutputUI()
+	if err != nil {
+		return err
+	}
+
+	config.ChangeOutputFile(filterName, output)
+	return nil
+}
 func isNumber(s string) bool {
 	s = strings.TrimSpace(s)
 	if len(s) == 0 {
@@ -420,4 +467,106 @@ func isNumber(s string) bool {
 	}
 	c := s[0]
 	return (c >= '0' && c <= '9') || c == '-'
+}
+
+// Получение пути файла с исходными данными
+func InputUI() (string, error) {
+	fmt.Printf("Поместите файл с исходными данными в папку input.")
+	fmt.Println("")
+	for {
+		fmt.Print("Введите имя файла с исходными данными (например: data.csv): ")
+		input, err := NewLine()
+		if err != nil {
+			return "", err
+		}
+
+		if strings.ContainsFunc(input, func(r rune) bool {
+			return unicode.IsSpace(r)
+		}) {
+			fmt.Println("В имени не должно быть пробелов.")
+			continue
+		}
+
+		if strings.ToLower(filepath.Ext(input)) != ".csv" {
+			fmt.Println("Файл должен быть с расширением '.csv'.")
+			continue
+		}
+
+		name := strings.TrimSuffix(input, ".csv")
+		if strings.ContainsFunc(name, func(r rune) bool {
+			return !(unicode.Is(unicode.Latin, r) ||
+				unicode.IsDigit(r) ||
+				r == '_' ||
+				r == '-')
+		}) {
+			fmt.Println("Имя может содержать только латинские буквы, цифры, '_' и '-'.")
+			continue
+		}
+
+		inputPath, err := pathFile.Input(input)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fmt.Printf("Файла %s не существует, попробуйте другое имя.\n", input)
+				continue
+			}
+			return "", err
+		}
+
+		confirmed, err := Verification()
+		if confirmed {
+			return inputPath, nil
+		}
+	}
+}
+
+// Получение пути файла с результатами обработки
+func OutputUI() (string, error) {
+	for {
+		fmt.Print("Пожалуйста, введите имя файла для сохранения результатов фильтрации (например: result.csv): ")
+		output, err := NewLine()
+		if err != nil {
+			return "", err
+		}
+
+		if len(output) == 0 {
+			fmt.Println("Имя файла не может быть пустым.")
+			continue
+		}
+
+		if strings.ContainsFunc(output, func(r rune) bool {
+			return unicode.IsSpace(r)
+		}) {
+			fmt.Println("В имени не должно быть пробелов.")
+			continue
+		}
+
+		if strings.ToLower(filepath.Ext(output)) != ".csv" {
+			fmt.Println("Файл должен быть с расширением '.csv'.")
+			continue
+		}
+
+		name := strings.TrimSuffix(output, ".csv")
+		if strings.ContainsFunc(name, func(r rune) bool {
+			return !(unicode.Is(unicode.Latin, r) ||
+				unicode.IsDigit(r) ||
+				r == '_' ||
+				r == '-')
+		}) {
+			fmt.Println("Имя может содержать только латинские буквы, цифры, '_' и '-'.")
+			continue
+		}
+
+		outputPath, err := pathFile.Output(output)
+		if err != nil {
+			if err == errorsx.ErrFileExists {
+				fmt.Printf("Файл %s уже существует, попробуйте другое имя.\n", output)
+				continue
+			}
+			return "", err
+		}
+		confirmed, err := Verification()
+		if confirmed {
+			return outputPath, nil
+		}
+	}
 }
