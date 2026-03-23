@@ -5,27 +5,32 @@ import (
 )
 
 // Фильтр соединений
-func ElementsFilter(data map[string][]string, filter map[string]struct{}) map[string][]string {
-	results := make(map[string][]string)
-	for formula, information := range data {
-		elements, err := regexp.RegexpFilter(formula)
+func ElementsFilter(data [][]string, filter []string) [][]string {
+	results := [][]string{}
+	for _, information := range data {
+		elements, err := regexp.RegexpFilter(information[0])
 		if err != nil {
 			continue
 		}
 		if containOnlyAllowed(elements, filter) {
-			results[formula] = information
+			results = append(results, information)
 		}
 	}
 	return results
 }
 
 // Обработка данных по соответствующему фильтру
-func containOnlyAllowed(elements []string, filter map[string]struct{}) bool {
+func containOnlyAllowed(elements []string, filter []string) bool {
 	if len(elements) == 0 {
 		return false
 	}
+	filterMap := make(map[string]struct{})
+	for _, element := range filter {
+		filterMap[element] = struct{}{}
+	}
+
 	for _, element := range elements {
-		if _, exists := filter[element]; !exists {
+		if _, found := filterMap[element]; !found {
 			return false
 		}
 	}

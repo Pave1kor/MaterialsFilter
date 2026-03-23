@@ -3,309 +3,253 @@ package cli
 import (
 	cfg "MaterialsFilter/internal/domain/config"
 	csvFile "MaterialsFilter/internal/infrastructure/csv"
-	json "MaterialsFilter/internal/infrastructure/json"
-	pathFile "MaterialsFilter/internal/infrastructure/path"
-	ptable "MaterialsFilter/internal/infrastructure/periodictable"
+	jsonFile "MaterialsFilter/internal/infrastructure/json"
 	errorsx "MaterialsFilter/pkg/errors"
-	"bufio"
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
-	"unicode"
 
 	"github.com/mattn/go-runewidth"
 )
 
-// Добавить элемент существующий фильтр
-func AddElementsInFilterUI(config *cfg.Config) error {
-	var nameFilter string
-	var listElements []string
-	var err error
+// Добавить элемент в существующий фильтр
+func AddElementsInFilterUI(config *cfg.Config) {
+	var (
+		nameFilter string
+		filter     cfg.Filter
+		existFunc  func(string) error
+		addFunc    func(string)
+		checkFunc  func() bool
+		err        error
+		found      bool
+	)
 	fmt.Println()
 	fmt.Println("Добавление новых элементов в существующий фильтр.")
 	listElementsInFilter(config.Filters)
 
-	//Верификация фильтра
-	nameFilter, err = verificationFilter(config, true)
-	if err != nil {
-		return err
-	}
-
-	// Добавление новых элементов
-	listElements, err = createListElements()
-	if err != nil {
-		return err
-	}
-	config.AddElementsInFilter(nameFilter, listElements)
-	fmt.Printf("Введенные элементы успешно добавлены в фильтр %s.\n", nameFilter)
-	fmt.Println()
-	return nil
-}
-
-func createListElements() ([]string, error) {
-	var newElement string
-	var listElements []string
-	var err error
-	fmt.Println("Создание списка химических элементов.")
-	fmt.Println("Чтобы завершить ввод, оставьте строку пустой.")
-
+	// Найти существующий фильтр
 	for {
-		fmt.Print("Химический элемент: ")
-		newElement, err = NewLine()
-		if err != nil {
-			return nil, err
+		fmt.Print("Имя фильтра из списка: ")
+		nameFilter = NewLine()
+		err = verificationName(nameFilter)
+		if errors.Is(err, errorsx.ErrVerification) {
+			continue
 		}
-
-		if len(newElement) == 0 && len(listElements) > 0 {
+		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		if found {
 			break
 		}
-		if len(listElements) == 0 && len(newElement) == 0 {
-			fmt.Println("Фильтр пуст. Добавьте хотя бы один химический элемент.")
-			continue
-		}
-		if !ptable.Get(newElement) {
-			fmt.Println("Неизвестный химический элемент. Попробуйте снова.")
-			continue
-		}
-
-		if slices.Contains(listElements, newElement) {
-			fmt.Println("Этот элемент уже добавлен. Попробуйте снова.")
-			continue
-		}
-
-		listElements = append(listElements, newElement)
+		fmt.Println("Фильтра с таким именем не существует. Попробуйте снова.")
 	}
-	return listElements, nil
-}
 
-func verificationFilter(config *cfg.Config, mustExist bool) (string, error) {
-	var nameFilter string
-	var err error
-	fmt.Println("Выбор фильтра.")
-	for {
-		fmt.Print("Введите имя фильтра: ")
-
-		nameFilter, err = NewLine()
-		if err != nil {
-			return "", err
+	// Проверка: существует ли химический элемент в фильтре
+	existFunc = func(element string) error {
+		if slices.Contains(filter.Elements, element) {
+			return errorsx.ErrElementExists
 		}
-		nameFilter = strings.TrimSpace(nameFilter)
-		if nameFilter == "" {
-			fmt.Println("Имя фильтра не может быть пустым.")
-			continue
-		}
-
-		if strings.ContainsFunc(nameFilter, func(r rune) bool {
-			return unicode.IsSpace(r)
-		}) {
-			fmt.Println("В имени не должно быть пробелов.")
-			continue
-		}
-
-		if strings.ContainsFunc(nameFilter, func(r rune) bool {
-			return !(unicode.Is(unicode.Latin, r) ||
-				unicode.IsDigit(r) ||
-				r == '_' ||
-				r == '-')
-		}) {
-			fmt.Println("Имя может содержать только латинские буквы, цифры, '_' и '-'.")
-			continue
-		}
-
-		exist := config.ExistFilter(nameFilter)
-
-		if mustExist && !exist {
-			fmt.Println("Фильтр с таким именем не существует. Попробуйте снова.")
-			continue
-		}
-
-		if !mustExist && exist {
-			fmt.Println("Фильтр с таким именем уже существует. Попробуйте снова.")
-			continue
-		}
-
-		confirmed, err := Verification()
-		if err != nil {
-			return "", err
-		}
-
-		if confirmed {
-			return nameFilter, nil
-		}
+		return nil
 	}
-}
 
-// Ввод новой строки
-func NewLine() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	newLine, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
+	// Добавление элемента в фильтр
+	addFunc = func(element string) {
+		filter.Elements = append(filter.Elements, element)
 	}
-	newLine = strings.TrimSpace(newLine)
-	return newLine, nil
-}
 
-// Проверка: да/нет
-func Verification() (bool, error) {
-	for {
-		fmt.Println("Подтверждение ввода.")
-		fmt.Print("Ожидаю (да/нет) или (yes/no): ")
-
-		input, err := NewLine()
-		if err != nil {
-			return false, err
-		}
-
-		switch input {
-		case "да", "yes", "y":
-			return true, nil
-		case "нет", "no", "n":
-			return false, nil
-		default:
-			fmt.Println("Введите 'да' или 'нет'.")
-		}
+	// Проверка: имеются ли записи в фильтре
+	checkFunc = func() bool {
+		return len(filter.Elements) > 0
 	}
+
+	// Добавление новых элементов в существующий фильтр
+	changeListElements(existFunc, addFunc, checkFunc)
+
+	// Добавление фильтра в конфиг
+	config.AddFilterInConfig(filter)
+	fmt.Printf("Введенные элементы успешно добавлены в фильтр %s.\n", nameFilter)
+	fmt.Println()
 }
 
 // Добавить элементы в новый фильтр
-func AddNewFilterUI(config *cfg.Config) error {
-	var nameFilter string
-	var listElements []string
-	var err error
+func AddNewFilterUI(config *cfg.Config) {
+	var (
+		filter     cfg.Filter
+		nameFilter string
+		existFunc  func(string) error
+		addFunc    func(string)
+		checkFunc  func() bool
+		err        error
+		found      bool
+	)
 	fmt.Println()
 	fmt.Println("Создание нового фильтра.")
 	listElementsInFilter(config.Filters)
 
-	nameFilter, err = verificationFilter(config, false)
-	if err != nil {
-		return err
+	// Создать фильтр с уникальным именем
+	for {
+		fmt.Print("Имя нового фильтра: ")
+		nameFilter = NewLine()
+		err = verificationName(nameFilter)
+		if errors.Is(err, errorsx.ErrVerification) {
+			continue
+		}
+		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		if !found {
+			break
+		}
+		fmt.Println("Фильтр с таким именем уже существует. Попробуйте снова.")
 	}
 
-	output, err := OutputUI()
-	if err != nil {
-		return err
+	// Ввод имени файла
+	filter.OutputPathFile = SetOutputPathFileUI(config.OutputPathFolder)
+
+	// Проверка: существует ли химический элемент в фильтре
+	existFunc = func(element string) error {
+		if slices.Contains(filter.Elements, element) {
+			return errorsx.ErrElementExists
+		}
+		return nil
 	}
 
-	// Верификация введенных элементов
-	listElements, err = createListElements()
-	if err != nil {
-		return err
+	// Добавить элемент в фильтр
+	addFunc = func(element string) {
+		filter.Elements = append(filter.Elements, element)
 	}
 
-	config.AddNewFilter(output, nameFilter, listElements)
-	fmt.Printf("Фильтр %s успешно создан!\n", nameFilter)
+	// Проверка: имеются ли записи в фильтре
+	checkFunc = func() bool {
+		return len(filter.Elements) > 0
+	}
+
+	// Создание списка химических элементов элементов
+	changeListElements(existFunc, addFunc, checkFunc)
+
+	// Добавление нового фильтра в конфиг
+	config.AddFilterInConfig(filter)
+	fmt.Printf("Фильтр %s успешно создан!\n", filter.Name)
 	fmt.Println()
-	return nil
 }
 
 // Удалить фильтр с заданным именем
-func DeleteFilterUI(config *cfg.Config) error {
-	var nameFilter string
-	var err error
+func DeleteFilterUI(config *cfg.Config) {
+	var (
+		nameFilter string
+		found      bool
+		err        error
+	)
 	fmt.Println()
 	fmt.Println("Удаление фильтра по его имени.")
 	listElementsInFilter(config.Filters)
-	nameFilter, err = verificationFilter(config, true)
-	if err != nil {
-		return err
-	}
 
-	err = config.DeleteFilter(nameFilter)
-	if err != nil {
-		return err
+	// Извлечь фильтр из конфига
+	for {
+		fmt.Print("Имя фильтра, который вы желаете удалить: ")
+		nameFilter = NewLine()
+
+		err = verificationName(nameFilter)
+		if errors.Is(err, errorsx.ErrVerification) {
+			continue
+		}
+		_, found = config.ExtractFilterFromConfig(nameFilter)
+
+		if found {
+			break
+		}
+		fmt.Println("Фильтра с таким именем не существует. Попробуйте снова.")
 	}
 
 	fmt.Printf("Фильтр %s успешно удален!", nameFilter)
 	fmt.Println()
-	return nil
-
 }
 
 // Удалить все фильтры
 func DeleteAllFiltersUI(config *cfg.Config) {
 	fmt.Println()
 	fmt.Println("Удаление всех фильтров.")
-	config.DeleteAllFilters()
+	config.DeleteAllFiltersFromConfig()
 	fmt.Println("Все фильтры успешно удалены!")
 	fmt.Println()
 }
 
 // Удалить элементы фильтра
-func DeleteElementsInFilterUI(config *cfg.Config) error {
-	var nameFilter string
-	var deleteElements []string
-	var err error
+func DeleteElementsInFilterUI(config *cfg.Config) {
+	var (
+		err        error
+		filter     cfg.Filter
+		existFunc  func(string) error
+		delFunc    func(string)
+		checkFunc  func() bool
+		nameFilter string
+		found      bool
+	)
 
 	fmt.Println()
 	fmt.Println("Удаление элементов из фильтра.")
 	listElementsInFilter(config.Filters)
 
-	nameFilter, err = verificationFilter(config, true)
-	if err != nil {
-		return err
+	// Поиск и извлечение существующего фильтра по его имени
+	for {
+		fmt.Print("Имя фильтра из списка: ")
+		nameFilter = NewLine()
+		err = verificationName(nameFilter)
+		if errors.Is(err, errorsx.ErrVerification) {
+			continue
+		}
+		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		if found {
+			break
+		}
+		fmt.Println("Фильтра с таким именем не существует. Попробуйте снова.")
 	}
 
-	deleteElements, err = createListElements()
-	if err != nil {
-		return err
+	// Проверка: существует ли химический элемент в фильтре.
+	existFunc = func(element string) error {
+		if slices.Contains(filter.Elements, element) {
+			return nil
+		}
+		return errorsx.ErrElementNotExists
 	}
 
-	config.DeleteElementsInFilter(nameFilter, deleteElements)
+	// Удаление элемента из фильтра
+	delFunc = func(element string) {
+		if len(filter.Elements) > 1 {
+			filter.Elements = slices.DeleteFunc(filter.Elements, func(i string) bool {
+				return i == element
+			})
+		} else {
+			fmt.Println("В фильтре остался последний химический элемент. Удаление элемента невозможно.")
+		}
+	}
+
+	// Проверка: имеются ли записи в фильтре
+	checkFunc = func() bool {
+		return len(filter.Elements) > 0
+	}
+
+	// Создание списка химических элементов элементов
+	changeListElements(existFunc, delFunc, checkFunc)
+
+	// Добавление нового фильтра в конфиг
+	config.AddFilterInConfig(filter)
 	fmt.Println("Все элементы успешно удалены из фильтра.")
 	fmt.Println()
-	return nil
 }
 
 // Вывод информации обо всех фильтрах, загруженных из файла настроек
-func InformationAboutConfig(config cfg.Config) error {
-	exe, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	baseDir := filepath.Dir(exe)
-	input, err := filepath.Abs(filepath.Clean(filepath.Join(baseDir, "data", "input")))
-	if err != nil {
-		return err
-	}
-	output, err := filepath.Abs(filepath.Clean(filepath.Join(baseDir, "data", "output")))
-	if err != nil {
-		return err
-	}
-	configFile, err := filepath.Abs(filepath.Clean(filepath.Join(baseDir, "configs", "config.json")))
-	if err != nil {
-		return err
-	}
+func InformationAboutConfig(config *cfg.Config) {
+
 	fmt.Println()
 	fmt.Println("Текущие настройки:")
 	fmt.Println("------------------")
-	fmt.Printf("Исходные данные: %s\n", input)
-	fmt.Printf("Результаты фильтрации: %s\n", output)
-	fmt.Printf("Файл настроек: %s\n", configFile)
-	fmt.Printf("Загружено фильтров: %d\n", len(config.Filters))
+	fmt.Printf("Файл с исходными данными: %s\n", config.InputPathFile)
+	fmt.Printf("Файл настроек: %s\n", config.ConfigPathFile)
+	fmt.Printf("Результаты фильтрации: %s\n", config.OutputPathFolder)
+	if len(config.Filters) > 0 {
+		fmt.Printf("Загружено фильтров: %d\n", len(config.Filters))
+	}
 	listElementsInFilter(config.Filters)
 	fmt.Println()
 
-	return nil
-}
-
-// Изменение имени обрабатываемого файла
-func ChangeInputFileUI(config *cfg.Config) error {
-	fmt.Println()
-	fmt.Println("Изменение имени файла с исходными данными.")
-
-	inputPath, err := InputUI()
-	if err != nil {
-		return err
-	}
-
-	config.ChangeInputFile(inputPath)
-	fmt.Println("Имя изменено!")
-	fmt.Println()
-	return nil
 }
 
 // Вывод в терминал доступных команд режима изменения настроек
@@ -326,36 +270,17 @@ func CommandsInformation() {
 	fmt.Println()
 }
 
-// Вывод в терминал списка элементов всех доступных фильтров
-func listElementsInFilter(filters []cfg.Filter) {
-	fmt.Println("Список фильтров.")
-	for val, filter := range filters {
-		var elements []string
-		for element := range filter.Filter {
-			elements = append(elements, element)
-		}
-		sort.Strings(elements)
-		fmt.Printf("\nФильтр %d.\n", val+1)
-		fmt.Printf("Название фильтра: %s\n", filter.Name)
-		fmt.Printf("Список элементов: %s\n", strings.Join(elements, ", "))
-		fmt.Printf("Имя файла для сохранения результатов фильтрации: %s\n", filepath.Base(filter.Output))
-	}
-}
-
-// Создание фала настроек (юзер интерфейс)
-func WriteJSONUI(config cfg.Config, configPath string, input string) error {
+// Создание файла настроек (пользовательский интерфейс)
+func WriteJSONUI(config *cfg.Config) {
 	fmt.Println()
 	fmt.Println("Файл настроек отсутствует!")
 	fmt.Println("Создание нового файла настроек.")
 
-	config.Input = input
-	err := json.WriteJSON(configPath, config)
-	if err != nil {
-		return err
-	}
+	config.InputPathFile = SetInputPathFileUI(config.InputPathFolder)
+	jsonFile.WriteJSON(config)
+
 	fmt.Println("Файл настроек создан.")
 	fmt.Println()
-	return nil
 }
 
 // Изменение заголовков столбцов
@@ -365,10 +290,8 @@ func ChangeHeadlinesUI(csv *csvFile.CSVFile) error {
 	fmt.Println("Введите новый заголовок (Enter — оставить как есть).")
 	for _, headline := range csv.Headlines {
 		fmt.Printf("%s -> ", headline)
-		line, err := NewLine()
-		if err != nil {
-			return err
-		}
+		line := NewLine()
+
 		if line == "" {
 			newHeadlines = append(newHeadlines, headline)
 			continue
@@ -378,14 +301,6 @@ func ChangeHeadlinesUI(csv *csvFile.CSVFile) error {
 	csv.ChangeHeadlines(newHeadlines)
 	fmt.Println("Все заголовки изменены.")
 	return nil
-}
-
-func toInterfaceSlice(s []string) []interface{} {
-	r := make([]any, len(s))
-	for i := range s {
-		r[i] = s[i]
-	}
-	return r
 }
 
 // Вывод в терминал таблицы с данными (шапка таблицы и первая строка)
@@ -427,146 +342,44 @@ func ViewTable(headlines []string, data []string) {
 	fmt.Println(border)
 }
 
-func padRight(s string, width int) string {
-	w := runewidth.StringWidth(s)
-	if w >= width {
-		return s
-	}
-	return s + strings.Repeat(" ", width-w)
-}
-
-func padLeft(s string, width int) string {
-	w := runewidth.StringWidth(s)
-	if w >= width {
-		return s
-	}
-	return strings.Repeat(" ", width-w) + s
-}
-
+// Изменение имени файла для сохранения результатов обработки
 func ChangeOutputFileUI(config *cfg.Config) error {
-	fmt.Println("\nИзменение имени файла для сохранения результатов обработки.")
+	var (
+		nameFilter string
+		err        error
+		filter     cfg.Filter
+		found      bool
+	)
+	fmt.Println("\nИзменение имени файла для сохранения результатов фильтрации.")
 	listElementsInFilter(config.Filters)
 
-	filterName, err := verificationFilter(config, true)
-	if err != nil {
-		return err
+	for {
+		fmt.Print("Имя фильтра: ")
+		nameFilter = NewLine()
+		err = verificationName(nameFilter)
+		if errors.Is(err, errorsx.ErrVerification) {
+			continue
+		}
+		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		if found {
+			break
+		}
+		fmt.Println("Фильтра с таким именем не существует. Попробуйте снова.")
 	}
+	filter.OutputPathFile = SetOutputPathFileUI(config.OutputPathFolder)
 
-	output, err := OutputUI()
-	if err != nil {
-		return err
-	}
-
-	config.ChangeOutputFile(filterName, output)
+	config.AddFilterInConfig(filter)
 	return nil
 }
-func isNumber(s string) bool {
-	s = strings.TrimSpace(s)
-	if len(s) == 0 {
-		return false
-	}
-	c := s[0]
-	return (c >= '0' && c <= '9') || c == '-'
-}
 
-// Получение пути файла с исходными данными
-func InputUI() (string, error) {
-	fmt.Printf("Поместите файл с исходными данными в папку input.")
-	fmt.Println("")
-	for {
-		fmt.Print("Введите имя файла с исходными данными (например: data.csv): ")
-		input, err := NewLine()
-		if err != nil {
-			return "", err
-		}
+// Изменение имени обрабатываемого файла
+func ChangeInputFileUI(config *cfg.Config) error {
+	fmt.Println()
+	fmt.Println("Изменение имени файла с исходными данными.")
 
-		if strings.ContainsFunc(input, func(r rune) bool {
-			return unicode.IsSpace(r)
-		}) {
-			fmt.Println("В имени не должно быть пробелов.")
-			continue
-		}
+	config.InputPathFile = SetInputPathFileUI(config.InputPathFolder)
 
-		if strings.ToLower(filepath.Ext(input)) != ".csv" {
-			fmt.Println("Файл должен быть с расширением '.csv'.")
-			continue
-		}
-
-		name := strings.TrimSuffix(input, ".csv")
-		if strings.ContainsFunc(name, func(r rune) bool {
-			return !(unicode.Is(unicode.Latin, r) ||
-				unicode.IsDigit(r) ||
-				r == '_' ||
-				r == '-')
-		}) {
-			fmt.Println("Имя может содержать только латинские буквы, цифры, '_' и '-'.")
-			continue
-		}
-
-		inputPath, err := pathFile.Input(input)
-		if err != nil {
-			if os.IsNotExist(err) {
-				fmt.Printf("Файла %s не существует, попробуйте другое имя.\n", input)
-				continue
-			}
-			return "", err
-		}
-
-		confirmed, err := Verification()
-		if confirmed {
-			return inputPath, nil
-		}
-	}
-}
-
-// Получение пути файла с результатами обработки
-func OutputUI() (string, error) {
-	for {
-		fmt.Print("Пожалуйста, введите имя файла для сохранения результатов фильтрации (например: result.csv): ")
-		output, err := NewLine()
-		if err != nil {
-			return "", err
-		}
-
-		if len(output) == 0 {
-			fmt.Println("Имя файла не может быть пустым.")
-			continue
-		}
-
-		if strings.ContainsFunc(output, func(r rune) bool {
-			return unicode.IsSpace(r)
-		}) {
-			fmt.Println("В имени не должно быть пробелов.")
-			continue
-		}
-
-		if strings.ToLower(filepath.Ext(output)) != ".csv" {
-			fmt.Println("Файл должен быть с расширением '.csv'.")
-			continue
-		}
-
-		name := strings.TrimSuffix(output, ".csv")
-		if strings.ContainsFunc(name, func(r rune) bool {
-			return !(unicode.Is(unicode.Latin, r) ||
-				unicode.IsDigit(r) ||
-				r == '_' ||
-				r == '-')
-		}) {
-			fmt.Println("Имя может содержать только латинские буквы, цифры, '_' и '-'.")
-			continue
-		}
-
-		outputPath, err := pathFile.Output(output)
-		if err != nil {
-			if err == errorsx.ErrFileExists {
-				fmt.Printf("Файл %s уже существует, попробуйте другое имя.\n", output)
-				continue
-			}
-			return "", err
-		}
-		confirmed, err := Verification()
-		if confirmed {
-			return outputPath, nil
-		}
-	}
+	fmt.Println("Имя изменено!")
+	fmt.Println()
+	return nil
 }

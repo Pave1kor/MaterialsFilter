@@ -8,33 +8,28 @@ import (
 	"fmt"
 )
 
-func Run(config *cfg.Config) error {
+func Run(config *cfg.Config) {
 
 	// Загрузка  (разделитель и имя файла для обработки)
-	csvFile := readerWriterCSV.NewCSVFile(config.Input)
+	csvFile := readerWriterCSV.NewCSVFile(config.InputPathFile)
 
 	// Чтение csv файла
-	data, err := csvFile.ReadCSV()
-	if err != nil {
-		return err
-	}
+	csvFile.ReadCSV()
 
 	// Вывод таблицы с данными (шапка и одна строка) в теримнал
 	cli.ViewTable(csvFile.Headlines, csvFile.Table)
 
 	fmt.Println("Желаете ли вы изменить заголовки столбцов?")
-	confirmed, err := cli.Verification()
-	if confirmed {
+	if cli.Verification() {
 		cli.ChangeHeadlinesUI(csvFile)
 	}
 
+	fmt.Println("Выполняется фильтрация по заданным фильтрам.")
 	// Фильтрация данных в соответствии с заданными настройками
 	for _, filter := range config.Filters {
-		filteredData := filters.ElementsFilter(data, filter.Filter)
-		if err := csvFile.WriteCSV(filteredData, filter.Filter, filter.Name, filter.Output, csvFile.Headlines); err != nil {
-			return err
-		}
+		filteredData := filters.ElementsFilter(csvFile.Data, filter.Elements)
+		csvFile.WriteCSV(filteredData, filter.Elements, filter.Name, filter.OutputPathFile, csvFile.Headlines)
 	}
-	fmt.Println("Успех!")
-	return nil
+	fmt.Println("Успех! Нажмите клавишу `Enter`, чтобы закрыть программу.")
+	cli.NewLine()
 }

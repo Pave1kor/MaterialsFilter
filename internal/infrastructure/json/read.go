@@ -3,19 +3,18 @@ package json
 import (
 	cfg "MaterialsFilter/internal/domain/config"
 	"encoding/json"
+	"log"
 	"os"
 )
 
 // Получение настроек из файла конфигурации
-func ReadJSON(configPath string) (cfg.Config, error) {
-	var jsonFile cfg.Config
-	fileData, err := os.ReadFile(configPath)
+func ReadJSON(config *cfg.Config) {
+	fileData, err := os.ReadFile(config.ConfigPathFile)
 	if err != nil {
-		return cfg.Config{}, err
+		log.Fatal(err)
 	}
-	err = json.Unmarshal(fileData, &jsonFile)
+	err = json.Unmarshal(fileData, &config)
 	if err != nil {
-		return cfg.Config{}, err
+		log.Fatal(err)
 	}
-	return jsonFile, nil
 }

@@ -1,93 +1,51 @@
 package path
 
 import (
-	"bufio"
 	errorsx "MaterialsFilter/pkg/errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-// Создание каталогов для хранения файлов input, output, config
-func Path() error {
-
-	base, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	baseDir := filepath.Dir(base)
-	dataPath := []string{
-		filepath.Join(baseDir, "configs"),
-		filepath.Join(baseDir, "data", "input"),
-		filepath.Join(baseDir, "data", "output"),
-	}
-
-	for _, dir := range dataPath {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+// Задать путь к файлу конфигураций
+func (path Base) SetConfigPathFile() (string, bool) {
+	configPathFile := filepath.Join(path.configPathFolder, "config.json")
+	_, err := os.Stat(configPathFile)
+	return configPathFile, err == nil
 }
 
-// Получение пути файла с исходными данными
-func Input(input string) (string, error) {
-	exe, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
+// Задать путь к файлу с исходными данными
+func SetInputPathFile(inputFileName, inputPathFolder string) (string, error) {
+	inputPathFile := filepath.Join(inputPathFolder, inputFileName)
 
-	inputPath := filepath.Join(filepath.Dir(exe), "data", "input", input)
-	if _, err := os.Stat(inputPath); err != nil {
-		return "", err
+	if _, err := os.Stat(inputPathFile); err != nil {
+		return "", fmt.Errorf("%w Измените имя файла.", errorsx.ErrInputNotExists)
 	}
-
-	return inputPath, nil
+	return inputPathFile, nil
 }
 
-// Получение пути файла с результатами обработки
-func Output(output string) (string, error) {
-	exe, err := os.Executable()
-	if err != nil {
-		return "", err
+// Задать путь к файлу с результатами обработки
+func SetOutputPathFile(outputFileName, outputPathFolder string) (string, error) {
+	outputPathFile := filepath.Join(outputPathFolder, outputFileName)
+	if _, err := os.Stat(outputPathFile); err == nil {
+		return "", fmt.Errorf("%w Файл будет перезаписан.", errorsx.ErrFileExists)
 	}
-
-	outputPath := filepath.Join(filepath.Dir(exe), "data", "output", output)
-
-	if _, err = os.Stat(outputPath); err == nil {
-		return "", errorsx.ErrFileExists
-	}
-
-	file, err := os.Create(outputPath)
+	file, err := os.Create(outputPathFile)
 	if err != nil {
-		return "", err
+		log.Fatal(err)
 	}
 	file.Close()
 
-	return outputPath, nil
+	return outputPathFile, nil
 }
 
-// Получение пути файла конфигурации
-func Config() (string, error) {
-	exe, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	path := filepath.Join(filepath.Dir(exe), "configs", "config.json")
-	return path, nil
+// Получение пути к папке с исходными данными
+func (path Base) GetInputPathFolder() string {
+	return path.inputPathFolder
 }
 
-func getReader(note string) (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print(note)
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	input = strings.TrimSpace(input)
-	return input, nil
+// Получение пути к папке с результатами обработки
+func (path Base) GetOutputPathFolder() string {
+	return path.outputPathFolder
 }

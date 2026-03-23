@@ -2,13 +2,9 @@ package main
 
 import (
 	app "MaterialsFilter/internal/app"
-	"log"
 )
 
 func main() {
-	config, err := app.Setup()
-	if err != nil {
-		log.Fatal(err)
-	}
+	config := app.Setup()
 	app.Run(config)
 }

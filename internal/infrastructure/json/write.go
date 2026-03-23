@@ -3,16 +3,19 @@ package json
 import (
 	cfg "MaterialsFilter/internal/domain/config"
 	"encoding/json"
+	"log"
 	"os"
 )
 
-// Создание нового файла конфигурация без фильтра
-func WriteJSON(configPath string, config cfg.Config) error {
+// Сохранение данных в конфигурационный файл
+func WriteJSON(config *cfg.Config) {
 
 	jsonData, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	err = os.WriteFile(configPath, jsonData, 0644)
-	return err
+	err = os.WriteFile(config.ConfigPathFile, jsonData, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

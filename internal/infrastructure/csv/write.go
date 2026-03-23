@@ -2,34 +2,28 @@ package csv
 
 import (
 	"encoding/csv"
+	"log"
 	"os"
 	"slices"
 	"strings"
 )
 
 // Сохранение отфильтрованного списка
-func (obj *CSVFile) WriteCSV(filteredData map[string][]string, listElements map[string]struct{}, filterName string, path string, headlines []string) error {
+func (obj *CSVFile) WriteCSV(filteredData [][]string, listElements []string, filterName string, path string, headlines []string) {
 	file, err := os.Create(path)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	defer file.Close()
 
 	writeFile(file, createFlterName(filterName), createListElements(listElements), filteredData, headlines)
-	return nil
 }
 
-func createListElements(listElements map[string]struct{}) []string {
-	keys := make([]string, 0, len(listElements))
-	for k := range listElements {
-		keys = append(keys, k)
-	}
-
-	slices.Sort(keys)
-
+func createListElements(listElements []string) []string {
+	slices.Sort(listElements)
 	return []string{
 		"List of elements to filter",
-		strings.Join(keys, ", "),
+		strings.Join(listElements, ", "),
 	}
 }
 
@@ -40,7 +34,7 @@ func createFlterName(filterName string) []string {
 	}
 }
 
-func writeFile(file *os.File, filterName []string, listElements []string, filteredData map[string][]string, headlines []string) error {
+func writeFile(file *os.File, filterName []string, listElements []string, filteredData [][]string, headlines []string) {
 	writer := csv.NewWriter(file)
 	writer.Comma = ';'
 
@@ -53,8 +47,6 @@ func writeFile(file *os.File, filterName []string, listElements []string, filter
 
 	writer.Flush()
 	if err := writer.Error(); err != nil {
-		return err
+		log.Fatal(err)
 	}
-
-	return nil
 }

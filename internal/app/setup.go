@@ -3,47 +3,42 @@ package app
 import (
 	cfg "MaterialsFilter/internal/domain/config"
 	manager "MaterialsFilter/internal/domain/configmanager"
-	json "MaterialsFilter/internal/infrastructure/json"
+	jsonFile "MaterialsFilter/internal/infrastructure/json"
 	pathFile "MaterialsFilter/internal/infrastructure/path"
 	cli "MaterialsFilter/internal/ui/cli"
 )
 
-func Setup() (*cfg.Config, error) {
+func Setup() *cfg.Config {
+	var (
+		config cfg.Config
+		exists bool
+	)
+	// Инициализация базовых каталогов
+	path := pathFile.NewPath()
 
-	// Инициализация каталогов
-	err := pathFile.Path()
-	if err != nil {
-		return nil, err
-	}
+	// Задать путь к файлу конфигураций
+	config.ConfigPathFile, exists = path.SetConfigPathFile()
 
-	// Инициализация пути конфигурационного файла
-	configPath, err := pathFile.Config()
-	if err != nil {
-		return nil, err
-	}
+	if exists {
+		// Прочитать данные из конфига
+		jsonFile.ReadJSON(&config)
+	} else {
+		// Получить путь к папке с исходными данными
+		config.InputPathFolder = path.GetInputPathFolder()
 
-	// Получение пути расположения файла с исходными данными
-	input, err := cli.InputUI()
-	if err != nil {
-		return nil, err
-	}
-
-	//  Создание пустого конфига, если его нет и получение настроек из конфига
-	config, err := LoadConfig(configPath, input)
-	if err != nil {
-		return nil, err
+		// Получить путь к папке с результатами обработки
+		config.OutputPathFolder = path.GetOutputPathFolder()
+		//Создать новый конфиг
+		cli.WriteJSONUI(&config)
 	}
 
 	// Получение информации о настройках из конфигурационного файла
-	cli.InformationAboutConfig(*config)
+	cli.InformationAboutConfig(&config)
 
 	// Изменение настроек (добавление, удаление фильтров и т.д.)
-	manager.ChangeConfig(config)
+	manager.ChangeConfig(&config)
 
 	// Сохранение настроек
-	err = json.WriteJSON(configPath, *config)
-	if err != nil {
-		return nil, err
-	}
-	return config, nil
+	jsonFile.WriteJSON(&config)
+	return &config
 }

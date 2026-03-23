@@ -8,23 +8,20 @@ import (
 
 func ChangeConfig(config *cfg.Config) {
 
-	if len(config.Input) == 0 {
+	if len(config.InputPathFile) == 0 {
 		fmt.Println("Не задано имя файла с исходными данными.")
 		cli.ChangeInputFileUI(config)
 	}
 
 	if len(config.Filters) == 0 {
-		fmt.Println("Список фильтров пуст.")
 		cli.AddNewFilterUI(config)
 	}
 
 	fmt.Println("Желаете ли вы изменить настройки фильтрации?")
-	if ok, err := cli.Verification(); err != nil {
-		fmt.Println("Ошибка при проверке ввода:", err)
-		return
-	} else if ok {
+	if cli.Verification() {
 		changeFilter(config)
 	}
+	fmt.Println("Окей, переходим к фильтрации.")
 }
 
 func changeFilter(config *cfg.Config) {
@@ -33,11 +30,7 @@ func changeFilter(config *cfg.Config) {
 	for {
 		fmt.Println()
 		fmt.Print("Команда: ")
-		command, err := cli.NewLine()
-		if err != nil {
-			fmt.Println("Ошибка при чтении ввода:", err)
-			continue
-		}
+		command := cli.NewLine()
 
 		switch command {
 		case "add-filter":
@@ -51,7 +44,7 @@ func changeFilter(config *cfg.Config) {
 		case "add-elements":
 			cli.AddElementsInFilterUI(config)
 		case "info":
-			cli.InformationAboutConfig(*config)
+			cli.InformationAboutConfig(config)
 		case "set-input-file":
 			cli.ChangeInputFileUI(config)
 		case "set-output-file":

@@ -3,17 +3,18 @@ package csv
 import (
 	"encoding/csv"
 	"io"
+	"log"
 	"os"
 	"strings"
 )
 
 // Чтение данных из csv файла
-func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
-	m := make(map[string][]string)
+func (obj *CSVFile) ReadCSV() {
+	data := [][]string{}
 
 	file, err := os.Open(obj.Input)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 	defer file.Close()
 
@@ -22,7 +23,7 @@ func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
 
 	record, err := r.Read()
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 	record = trimEmptyTail(record)
 	obj.Headlines = record
@@ -33,20 +34,19 @@ func (obj *CSVFile) ReadCSV() (map[string][]string, error) {
 			break
 		}
 		if err != nil {
-			return nil, err
+			log.Fatal(err)
 		}
 		record = trimEmptyTail(record)
 		if len(record) > 6 {
 			continue
 		}
-		m[record[0]] = record
+		data = append(data, record)
 	}
-
-	for _, val := range m {
+	obj.Data = data
+	for _, val := range data {
 		obj.Table = val
 		break
 	}
-	return m, nil
 }
 
 // Обрезаем хвостовые пустые элементы
