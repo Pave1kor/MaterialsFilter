@@ -1,10 +1,26 @@
 package config
 
 // Добавление фильтра в конфиг
-func (cfg *Config) AddFilterInConfig(newFilter Filter) {
-	// newCfg := cfg.Filters
-	// cfg.Filters = newCfg
-	cfg.Filters = append(cfg.Filters, newFilter)
+func (cfg *Config) AddFilterInConfig(filter *Filter) {
+	cfg.Filters = append(cfg.Filters, *filter)
+}
+
+// Добавление имени файла с исходными данными в конфиг
+func (cfg *Config) AddOutputFileNameInConfig(outputFileName string) {
+	cfg.OutputFileNameList = append(cfg.OutputFileNameList, outputFileName)
+}
+
+// Удаление имени файла с исходными данными из конфига
+func (cfg *Config) DeleteOutputFileNameFromConfig(outputFileName string) {
+	newList := make([]string, 0, len(cfg.OutputFileNameList))
+
+	for _, fileName := range cfg.OutputFileNameList {
+		if fileName == outputFileName {
+			continue
+		}
+		newList = append(newList, fileName)
+	}
+	cfg.OutputFileNameList = newList
 }
 
 // Удаление фильтров
@@ -12,21 +28,39 @@ func (cfg *Config) DeleteAllFiltersFromConfig() {
 	cfg.Filters = nil
 }
 
-// Извлечение фильтра из конфига
-func (cfg *Config) ExtractFilterFromConfig(nameFilter string) (Filter, bool) {
+// Удаление фильтра
+func (cfg *Config) DeleteFilterInConfig(nameFilter string) {
+	newFilter := make([]Filter, 0, len(cfg.Filters))
+
+	for _, filter := range cfg.Filters {
+		if filter.Name == nameFilter {
+			continue
+		}
+		newFilter = append(newFilter, filter)
+	}
+	cfg.Filters = newFilter
+}
+
+// Поиск фильтра в конфиге
+func (cfg *Config) FindFilterInConfig(nameFilter string) (*Filter, bool) {
 	for idx := range cfg.Filters {
 		if cfg.Filters[idx].Name == nameFilter {
-			filter := cfg.Filters[idx]
-
-			if idx < len(cfg.Filters)-1 {
-				copy(cfg.Filters[idx:], cfg.Filters[idx+1:])
-			}
-			cfg.Filters = cfg.Filters[:len(cfg.Filters)-1]
-
-			return filter, true
+			return &cfg.Filters[idx], true
 		}
 	}
-	return Filter{
-		Name: nameFilter,
-	}, false
+	return nil, false
+}
+
+// Обновление имени файла с исходными данными в конфиге
+func (cfg *Config) UpdateOutputFilenameInConfig(oldOutputFileName, newOutputFileName string) {
+	newList := make([]string, 0, len(cfg.OutputFileNameList))
+
+	for _, fileName := range cfg.OutputFileNameList {
+		if fileName == oldOutputFileName {
+			newList = append(newList, newOutputFileName)
+			continue
+		}
+		newList = append(newList, fileName)
+	}
+	cfg.OutputFileNameList = newList
 }

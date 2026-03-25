@@ -1,11 +1,13 @@
 package cli
 
 import (
+	cfg "MaterialsFilter/internal/domain/config"
 	pathFile "MaterialsFilter/internal/infrastructure/path"
 	errorsx "MaterialsFilter/pkg/errors"
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -47,7 +49,7 @@ func SetInputPathFileUI(inputPathFolder string) string {
 }
 
 // Получение пути к файлу с результатами обработки
-func SetOutputPathFileUI(outputPathFolder string) string {
+func SetOutputPathFileUI(config *cfg.Config) string {
 	var (
 		outputFileName string
 		outputPathFile string
@@ -74,11 +76,12 @@ func SetOutputPathFileUI(outputPathFolder string) string {
 			continue
 		}
 
-		outputPathFile, err = pathFile.SetOutputPathFile(outputFileName, outputPathFolder)
-		if errors.Is(err, errorsx.ErrFileExists) {
+		if slices.Contains(config.OutputFileNameList, outputFileName) {
 			fmt.Printf("Файл %s уже существует, попробуйте другое имя.\n", outputFileName)
 			continue
 		}
+
+		outputPathFile = pathFile.SetOutputPathFile(outputFileName, config.OutputPathFolder)
 		return outputPathFile
 	}
 }

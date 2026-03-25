@@ -31,6 +31,8 @@ func Setup() *cfg.Config {
 		//Создать новый конфиг
 		cli.WriteJSONUI(&config)
 	}
+	// Сихронизация информации о файлах с результатами фильтрации с данными в конфигурационном файле
+	config.OutputFileNameList = path.SyncOutputFileName()
 
 	// Получение информации о настройках из конфигурационного файла
 	cli.InformationAboutConfig(&config)

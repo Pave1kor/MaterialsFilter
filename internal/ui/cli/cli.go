@@ -7,6 +7,7 @@ import (
 	errorsx "MaterialsFilter/pkg/errors"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -17,7 +18,7 @@ import (
 func AddElementsInFilterUI(config *cfg.Config) {
 	var (
 		nameFilter string
-		filter     cfg.Filter
+		filter     *cfg.Filter
 		existFunc  func(string) error
 		addFunc    func(string)
 		checkFunc  func() bool
@@ -36,7 +37,7 @@ func AddElementsInFilterUI(config *cfg.Config) {
 		if errors.Is(err, errorsx.ErrVerification) {
 			continue
 		}
-		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		filter, found = config.FindFilterInConfig(nameFilter)
 		if found {
 			break
 		}
@@ -64,8 +65,6 @@ func AddElementsInFilterUI(config *cfg.Config) {
 	// Добавление новых элементов в существующий фильтр
 	changeListElements(existFunc, addFunc, checkFunc)
 
-	// Добавление фильтра в конфиг
-	config.AddFilterInConfig(filter)
 	fmt.Printf("Введенные элементы успешно добавлены в фильтр %s.\n", nameFilter)
 	fmt.Println()
 }
@@ -73,7 +72,7 @@ func AddElementsInFilterUI(config *cfg.Config) {
 // Добавить элементы в новый фильтр
 func AddNewFilterUI(config *cfg.Config) {
 	var (
-		filter     cfg.Filter
+		filter     *cfg.Filter
 		nameFilter string
 		existFunc  func(string) error
 		addFunc    func(string)
@@ -93,15 +92,21 @@ func AddNewFilterUI(config *cfg.Config) {
 		if errors.Is(err, errorsx.ErrVerification) {
 			continue
 		}
-		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		_, found = config.FindFilterInConfig(nameFilter)
 		if !found {
+			filter = &cfg.Filter{
+				Name: nameFilter,
+			}
 			break
 		}
 		fmt.Println("Фильтр с таким именем уже существует. Попробуйте снова.")
 	}
 
 	// Ввод имени файла
-	filter.OutputPathFile = SetOutputPathFileUI(config.OutputPathFolder)
+	filter.OutputPathFile = SetOutputPathFileUI(config)
+
+	// Добавление имени файла в файл настроек
+	config.AddOutputFileNameInConfig(filepath.Base(filter.OutputPathFile))
 
 	// Проверка: существует ли химический элемент в фильтре
 	existFunc = func(element string) error {
@@ -123,8 +128,6 @@ func AddNewFilterUI(config *cfg.Config) {
 
 	// Создание списка химических элементов элементов
 	changeListElements(existFunc, addFunc, checkFunc)
-
-	// Добавление нового фильтра в конфиг
 	config.AddFilterInConfig(filter)
 	fmt.Printf("Фильтр %s успешно создан!\n", filter.Name)
 	fmt.Println()
@@ -135,6 +138,7 @@ func DeleteFilterUI(config *cfg.Config) {
 	var (
 		nameFilter string
 		found      bool
+		filter     *cfg.Filter
 		err        error
 	)
 	fmt.Println()
@@ -150,13 +154,19 @@ func DeleteFilterUI(config *cfg.Config) {
 		if errors.Is(err, errorsx.ErrVerification) {
 			continue
 		}
-		_, found = config.ExtractFilterFromConfig(nameFilter)
+		filter, found = config.FindFilterInConfig(nameFilter)
 
 		if found {
 			break
 		}
 		fmt.Println("Фильтра с таким именем не существует. Попробуйте снова.")
 	}
+
+	// Удаление имени файла с исходными данными из конфигурационного файла
+	config.DeleteOutputFileNameFromConfig(filepath.Base(filter.OutputPathFile))
+
+	// Удаление фильтра из конфига
+	config.DeleteFilterInConfig(nameFilter)
 
 	fmt.Printf("Фильтр %s успешно удален!", nameFilter)
 	fmt.Println()
@@ -175,7 +185,7 @@ func DeleteAllFiltersUI(config *cfg.Config) {
 func DeleteElementsInFilterUI(config *cfg.Config) {
 	var (
 		err        error
-		filter     cfg.Filter
+		filter     *cfg.Filter
 		existFunc  func(string) error
 		delFunc    func(string)
 		checkFunc  func() bool
@@ -195,7 +205,7 @@ func DeleteElementsInFilterUI(config *cfg.Config) {
 		if errors.Is(err, errorsx.ErrVerification) {
 			continue
 		}
-		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		filter, found = config.FindFilterInConfig(nameFilter)
 		if found {
 			break
 		}
@@ -229,9 +239,7 @@ func DeleteElementsInFilterUI(config *cfg.Config) {
 	// Создание списка химических элементов элементов
 	changeListElements(existFunc, delFunc, checkFunc)
 
-	// Добавление нового фильтра в конфиг
-	config.AddFilterInConfig(filter)
-	fmt.Println("Все элементы успешно удалены из фильтра.")
+	fmt.Println("Элементы успешно удалены из фильтра.")
 	fmt.Println()
 }
 
@@ -343,12 +351,13 @@ func ViewTable(headlines []string, data []string) {
 }
 
 // Изменение имени файла для сохранения результатов обработки
-func ChangeOutputFileUI(config *cfg.Config) error {
+func ChangeOutputFileUI(config *cfg.Config) {
 	var (
-		nameFilter string
-		err        error
-		filter     cfg.Filter
-		found      bool
+		nameFilter        string
+		oldOutputFileName string
+		err               error
+		filter            *cfg.Filter
+		found             bool
 	)
 	fmt.Println("\nИзменение имени файла для сохранения результатов фильтрации.")
 	listElementsInFilter(config.Filters)
@@ -360,16 +369,19 @@ func ChangeOutputFileUI(config *cfg.Config) error {
 		if errors.Is(err, errorsx.ErrVerification) {
 			continue
 		}
-		filter, found = config.ExtractFilterFromConfig(nameFilter)
+		filter, found = config.FindFilterInConfig(nameFilter)
 		if found {
 			break
 		}
 		fmt.Println("Фильтра с таким именем не существует. Попробуйте снова.")
 	}
-	filter.OutputPathFile = SetOutputPathFileUI(config.OutputPathFolder)
+	oldOutputFileName = filepath.Base(filter.OutputPathFile)
+	filter.OutputPathFile = SetOutputPathFileUI(config)
 
-	config.AddFilterInConfig(filter)
-	return nil
+	// Обновление имени файла с исходными данными в конфиге
+	config.UpdateOutputFilenameInConfig(oldOutputFileName, filter.OutputPathFile)
+	fmt.Println("Имя изменено!")
+	fmt.Println()
 }
 
 // Изменение имени обрабатываемого файла

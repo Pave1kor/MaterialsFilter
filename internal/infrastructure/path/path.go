@@ -2,7 +2,6 @@ package path
 
 import (
 	errorsx "MaterialsFilter/pkg/errors"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -20,24 +19,15 @@ func SetInputPathFile(inputFileName, inputPathFolder string) (string, error) {
 	inputPathFile := filepath.Join(inputPathFolder, inputFileName)
 
 	if _, err := os.Stat(inputPathFile); err != nil {
-		return "", fmt.Errorf("%w Измените имя файла.", errorsx.ErrInputNotExists)
+		return "", errorsx.ErrInputNotExists
 	}
 	return inputPathFile, nil
 }
 
 // Задать путь к файлу с результатами обработки
-func SetOutputPathFile(outputFileName, outputPathFolder string) (string, error) {
+func SetOutputPathFile(outputFileName, outputPathFolder string) string {
 	outputPathFile := filepath.Join(outputPathFolder, outputFileName)
-	if _, err := os.Stat(outputPathFile); err == nil {
-		return "", fmt.Errorf("%w Файл будет перезаписан.", errorsx.ErrFileExists)
-	}
-	file, err := os.Create(outputPathFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	file.Close()
-
-	return outputPathFile, nil
+	return outputPathFile
 }
 
 // Получение пути к папке с исходными данными
@@ -48,4 +38,16 @@ func (path Base) GetInputPathFolder() string {
 // Получение пути к папке с результатами обработки
 func (path Base) GetOutputPathFolder() string {
 	return path.outputPathFolder
+}
+
+func (path Base) SyncOutputFileName() []string {
+	var listFiles []string
+	files, err := os.ReadDir(path.outputPathFolder)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		listFiles = append(listFiles, file.Name())
+	}
+	return listFiles
 }
